@@ -76,7 +76,7 @@ def read_docx_text(path: str) -> str:
                     if cell_text:
                         paragraphs.append(cell_text)
         return "\n".join(paragraphs)
-    except ImportError:
+    except Exception:
         # Fallback: try to read raw XML from the docx zip
         import zipfile
         import xml.etree.ElementTree as ET
