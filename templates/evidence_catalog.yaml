@@ -1,0 +1,50 @@
+template_name: 证据目录
+description: 证据清单目录模板，用于整理和展示案件证据
+version: "1.0"
+
+headers:
+  - 序号
+  - 证据名称
+  - 证据类型
+  - 证明内容
+  - 来源
+  - 页码
+  - 备注
+
+metadata:
+  evidence_types:
+    - 书证
+    - 物证
+    - 证人证言
+    - 视听资料
+    - 电子数据
+    - 当事人陈述
+    - 鉴定意见
+    - 勘验笔录
+
+sections:
+  - heading: 证据目录
+    content: |
+      本案共提交证据 {{total_count}} 项，具体如下：
+
+  - heading: 证据清单
+    table:
+      columns:
+        - 序号
+        - 证据名称
+        - 证据类型
+        - 证明内容
+        - 来源
+        - 页码
+        - 备注
+      rows: "{{evidence_rows}}"
+
+  - heading: 证据说明
+    content: |
+      {{evidence_notes}}
+
+min_required_slots:
+  - evidence_rows
+optional_slots:
+  - evidence_notes
+  - total_count

@@ -1,0 +1,39 @@
+template_name: 案件处境评估报告
+description: 通用案件评估报告模板，适用于所有身份和场景
+version: "1.0"
+
+sections:
+  - heading: 基本信息
+    content: |
+      案号：{{case_id}}
+      法院：{{court}}
+      当事人：{{parties}}
+      争议金额：{{amount}}
+  - heading: 案件事实摘要
+    content: |
+      {{key_facts}}
+  - heading: 争议焦点
+    content: |
+      {{disputed_facts}}
+  - heading: 缺失材料
+    content: |
+      {{missing_materials}}
+  - heading: 冲突点
+    content: |
+      {{conflicts}}
+  - heading: 综合评估
+    content: |
+      {{situation_assessment}}
+
+metadata:
+  min_required_slots:
+    - case_id
+    - court
+    - parties
+    - key_facts
+  optional_slots:
+    - amount
+    - disputed_facts
+    - missing_materials
+    - conflicts
+    - situation_assessment

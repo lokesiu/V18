@@ -1,0 +1,122 @@
+template_name: 民事答辩状
+description: 用于应诉答辩的答辩状模板 - 针对具体案件事实生成
+version: "2.0"
+
+sections:
+  - heading: 民事答辩状
+    content: |
+      民事答辩状
+
+      答辩人：{{defendant_name}}
+      被答辩人：{{plaintiff_name}}
+
+      答辩人因{{plaintiff_name}}诉答辩人{{case_type}}一案，针对被答辩人的诉讼请求，提出如下答辩意见。
+
+  - heading: 答辩请求
+    content: |
+      答辩请求：
+
+      一、请求依法核实被答辩人主张的借款本金、利息及计算依据；
+      二、对无证据支持或计算不清的利息、费用请求不予支持；
+      三、本案诉讼费用依法承担。
+
+  - heading: 事实与理由
+    content: |
+      事实与理由：
+
+      一、关于借款关系的意见
+      {{key_facts}}
+
+      二、关于借款本金是否实际交付的意见
+      根据案件材料，被答辩人主张已通过银行转账方式支付借款本金。答辩人对款项交付事实{{delivery_opinion}}。
+
+      三、关于借款期限和到期时间的意见
+      {{deadline_opinion}}
+
+      四、关于利息计算方式的意见
+      {{interest_opinion}}
+
+      五、关于被答辩人催收事实和还款沟通记录的意见
+      {{collection_opinion}}
+
+      六、关于证据真实性、关联性、合法性的质证意见
+      {{evidence_opinion}}
+
+      七、关于调解、分期履行或减免利息的可能方案
+      {{mediation_opinion}}
+
+  - heading: 证据目录和证明目的
+    content: |
+      证据目录：
+
+      一、借款协议
+      证明目的：证明双方之间存在借款合同关系，以及借款金额、期限、利率等约定内容。
+
+      二、银行转账凭证
+      证明目的：证明答辩人实际收到借款本金的事实。
+
+      三、催收记录
+      证明目的：证明被答辩人主张债权的时间和方式。
+
+      四、还款凭证
+      证明目的：证明答辩人已偿还部分款项的事实（如有）。
+
+      五、双方沟通记录
+      证明目的：证明双方就还款事宜进行协商的过程。
+
+      六、经济困难证明
+      证明目的：如主张分期或减免，证明答辩人当前经济状况。
+
+  - heading: 风险提示
+    content: |
+      风险提示：
+
+      {{risk_warnings}}
+
+  - heading: 综合评估
+    content: |
+      案件综合评估：{{sabcd_rating}}
+
+      {{situation_assessment}}
+
+  - heading: 结论
+    content: |
+      综上所述，答辩人请求贵院：
+
+      一、依法查明案件事实；
+      二、对无证据支持或计算不清的利息、费用请求不予支持；
+      三、公正审理本案，维护答辩人的合法权益。
+
+      以上答辩意见，请贵院予以审查。
+
+  - heading: 落款
+    content: |
+      此致
+      {{court}}
+
+      答辩人：{{defendant_name}}
+      日期：{{current_date}}
+
+      附：
+      1. 本答辩状副本一份；
+      2. 相关证据材料。
+
+metadata:
+  version: "2.0"
+  min_required_slots:
+    - defendant_name
+    - plaintiff_name
+    - case_type
+    - court
+    - key_facts
+  optional_slots:
+    - delivery_opinion
+    - deadline_opinion
+    - interest_opinion
+    - collection_opinion
+    - evidence_opinion
+    - mediation_opinion
+    - risk_warnings
+    - sabcd_rating
+    - situation_assessment
+    - current_date

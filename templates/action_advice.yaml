@@ -1,0 +1,31 @@
+template_name: 行动建议书
+description: 基于案件分析的行动建议模板
+version: "1.0"
+
+sections:
+  - heading: 行动建议
+    content: |
+      {{action_advice_list}}
+  - heading: 证据补强建议
+    content: |
+      {{evidence_gap}}
+  - heading: 风险提示
+    content: |
+      {{risk_warnings}}
+  - heading: 综合评级
+    content: |
+      {{sabcd_rating}}
+
+metadata:
+  rating_scale:
+    - S: "最优先执行，立即行动"
+    - A: "强烈建议，短期内完成"
+    - B: "建议执行，可合理安排时间"
+    - C: "可选执行，视情况而定"
+    - D: "不建议执行，风险大于收益"
+  min_required_slots:
+    - action_advice_list
+    - sabcd_rating
+  optional_slots:
+    - evidence_gap
+    - risk_warnings

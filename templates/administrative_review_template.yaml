@@ -1,0 +1,71 @@
+template_name: 行政复议申请书
+description: 用于向行政机关申请行政复议的文书模板
+version: "1.0"
+
+sections:
+  - heading: 行政复议申请书
+    content: |
+      行政复议申请书
+  - heading: 申请人信息
+    content: |
+      申请人：{{applicant_name}}
+      身份证号：{{applicant_id}}
+      联系电话：{{applicant_phone}}
+      住址：{{applicant_address}}
+  - heading: 被申请人信息
+    content: |
+      被申请人：{{agency_name}}
+      地址：{{agency_address}}
+  - heading: 行政行为信息
+    content: |
+      被复议的具体行政行为：{{administrative_action}}
+      作出时间：{{action_date}}
+      文书编号：{{document_number}}
+  - heading: 复议请求
+    content: |
+      {{review_requests}}
+  - heading: 事实与理由
+    content: |
+      {{facts_and_reasons}}
+  - heading: 证据清单
+    content: |
+      {{evidence_list}}
+  - heading: 法律依据
+    content: |
+      {{legal_basis}}
+  - heading: 落款
+    content: |
+      此致
+      {{review_authority}}
+
+      申请人（签名）：{{applicant_name}}
+      日期：{{filing_date}}
+
+      附：
+      1. 行政复议申请书副本{{copy_count}}份；
+      2. 身份证明材料复印件{{id_copy_count}}份；
+      3. 原行政决定书复印件{{decision_copy_count}}份；
+      {{attachments}}
+
+metadata:
+  min_required_slots:
+    - applicant_name
+    - agency_name
+    - administrative_action
+    - review_requests
+    - facts_and_reasons
+    - review_authority
+    - filing_date
+  optional_slots:
+    - applicant_id
+    - applicant_phone
+    - applicant_address
+    - agency_address
+    - action_date
+    - document_number
+    - evidence_list
+    - legal_basis
+    - copy_count
+    - id_copy_count
+    - decision_copy_count
+    - attachments

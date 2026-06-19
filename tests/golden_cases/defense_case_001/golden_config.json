@@ -1,0 +1,44 @@
+"""
+tests/golden_cases/defense_case_001/golden_config.json
+
+Golden case configuration for defense scenario.
+This file defines expected outputs and quality thresholds.
+"""
+{
+  "case_id": "GOLDEN_DEFENSE_001",
+  "scenario": "defense",
+  "identity": "被诉方",
+  "goal": "应诉答辩",
+  "description": "张三 vs 李四 借款纠纷 - 被诉方应诉答辩黄金测试案",
+  "input_dir": "tests/golden_cases/defense_case_001/input",
+  "expected_output_dir": "outputs/golden_defense_case",
+  "quality_thresholds": {
+    "min_action_advice": 6,
+    "min_evidence_gap": 5,
+    "require_sabcd_rating": true,
+    "require_pdf": true,
+    "require_zip": true,
+    "zip_must_contain_pdf": true,
+    "reject_local_fallback": true,
+    "min_docx_chinese_chars": 100,
+    "forbidden_patterns": [
+      "文书 1:", "文书 1：",
+      "类型:", "类型：",
+      "待补充", "{{", "}}",
+      "TODO", "暂无", "请自行补充"
+    ]
+  },
+  "expected_files": [
+    "答辩状.docx",
+    "证据清单.docx",
+    "案件评估报告.docx",
+    "行动建议书.docx",
+    "证据闭环清单.docx",
+    "*.pdf",
+    "*.zip"
+  ],
+  "regression_checks": [
+    "defense_quality_gate",
+    "accept_v18_delivery"
+  ]
+}

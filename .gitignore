@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+*.spec
+.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+
+# Secrets
+.env
+*.env
+
+# Generated outputs (not source code)
+outputs/
+raw_materials_real_defense/
+raw_materials/
+
+# Binary/media files (not source code)
+*.pdf
+*.docx
+*.xlsx
+*.jpg
+*.png
+*.zip
+
+# Logs
+crash_debug.log
+*.log
+
+# Test artifacts
+clipboard_screenshot.png
+section_*.png
+test_*.pdf
+
+# OS
+Thumbs.db
+Desktop.ini
+
+# SQLite databases (user data)
+*.db

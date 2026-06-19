@@ -1,0 +1,58 @@
+template_name: 证据整理清单
+description: 用于系统整理和编排案件证据的模板
+version: "1.0"
+
+sections:
+  - heading: 证据整理清单
+    content: |
+      证据整理清单
+      案号：{{case_id}}
+      当事人：{{parties}}
+  - heading: 证据分类说明
+    content: |
+      本案证据按照证明目的分为以下类别：
+      {{evidence_categories}}
+  - heading: 证据清单
+    table:
+      columns:
+        - 序号
+        - 证据名称
+        - 证据类型
+        - 证明内容
+        - 来源
+        - 页码
+        - 备注
+      rows: "{{evidence_rows}}"
+  - heading: 证据分析
+    content: |
+      {{evidence_analysis}}
+  - heading: 证据链完整性评估
+    content: |
+      {{evidence_completeness}}
+  - heading: 缺失证据提示
+    content: |
+      {{missing_evidence}}
+  - heading: 证据提交说明
+    content: |
+      以上证据共 {{total_count}} 项，均系原件/复印件（勾选适用项）。
+      证据装订顺序如下：
+      {{submission_order}}
+
+metadata:
+  evidence_types:
+    - 原件
+    - 复印件
+    - 电子数据截图
+    - 公证件
+    - 鉴定报告
+  min_required_slots:
+    - case_id
+    - parties
+    - evidence_rows
+  optional_slots:
+    - evidence_categories
+    - evidence_analysis
+    - evidence_completeness
+    - missing_evidence
+    - total_count
+    - submission_order

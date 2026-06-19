@@ -1,0 +1,49 @@
+template_name: 民事起诉状
+description: 用于向法院提起民事诉讼的起诉状模板
+version: "2.0"
+
+sections:
+  - heading: 民事起诉状
+    content: |
+      民事起诉状
+
+      原告信息：
+      {{parties}}
+
+      案件编号：{{case_id}}
+      管辖法院：{{court}}
+
+      诉讼请求：
+      1. 判令被告向原告支付{{amount}}；
+      2. 判令被告承担本案全部诉讼费用。
+
+      事实与理由：
+      {{key_facts}}
+
+      证据清单：
+      {{source_refs}}
+
+      法律依据：
+      依据相关民事法律法规，特提起诉讼。
+
+      综合评级：{{sabcd_rating}}
+
+      行动建议：
+      {{action_advice}}
+
+      风险提示：
+      {{risk_warnings}}
+
+      此致
+      {{court}}
+
+      具状人：_______________
+      日期：_______________
+
+      附：
+      1. 本诉状副本一份；
+      2. 相关证据材料。
+
+metadata:
+  version: "2.0"
+  author: "明证台V18系统"
