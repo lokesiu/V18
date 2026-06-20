@@ -812,5 +812,6 @@ def _save_distilled_card_as_text(distilled_card, output_path: str, ctx: Pipeline
     lines.append("=" * 60)
 
     content = "\n".join(lines)
+    os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(content)
