@@ -227,31 +227,8 @@ def step6_llm_generate(ctx: PipelineContext) -> PipelineContext:
 
 def _distill_llm_output(content: str) -> str:
     """蒸馏 LLM 原始输出：清理格式、去除噪声、保留核心内容。"""
-    import re
-    if not content:
-        return content
-
-    # 1. 移除 Markdown 格式
-    content = re.sub(r'\*\*([^*]+)\*\*', r'\1', content)  # **bold** -> bold
-    content = re.sub(r'^#{1,6}\s+', '', content, flags=re.MULTILINE)  # ### heading -> heading
-    content = re.sub(r'^\s*[-*]\s+', '', content, flags=re.MULTILINE)  # - list -> list
-    content = re.sub(r'`([^`]+)`', r'\1', content)  # `code` -> code
-
-    # 2. 移除 LLM 对话式开头
-    content = re.sub(r'^好的[，,。.!！\s]*', '', content)
-    content = re.sub(r'资深诉讼律师[^。！\n]*[。！\n]?', '', content)
-    content = re.sub(r'为您撰写以下[：:]?\s*\n?', '', content)
-    content = re.sub(r'以下是[^。！\n]*[。！\n]?\s*\n?', '', content)
-    content = re.sub(r'根据[^，。\n]*要求[，,]?\s*', '', content)
-
-    # 3. 移除模糊法律引用
-    content = re.sub(r'《[^》]+》相关规定', '', content)
-    content = re.sub(r'的相关规定', '', content)
-
-    # 4. 清理多余空行
-    content = re.sub(r'\n{3,}', '\n\n', content)
-
-    return content.strip()
+    from core.text_utils import clean_llm_output
+    return clean_llm_output(content)
 
 
 async def _generate_all_docs(

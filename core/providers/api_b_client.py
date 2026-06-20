@@ -576,38 +576,21 @@ def _extract_user_info(fact_card: FactCard) -> dict:
     
     Returns dict keyed by party name with gender, birth, address, id_number, phone.
     """
-    import re
+    from core.text_utils import extract_personal_info
     info = {}
     if not fact_card.source_refs:
         return info
     
     for ref in fact_card.source_refs:
         excerpt = ref.excerpt or ""
-        # Find name + ID pattern: "姓名，性别，...身份证号：XXX，电话：XXX"
         for party in fact_card.parties:
             if party.name and party.name in excerpt:
                 if party.name not in info:
                     info[party.name] = {}
-                # Extract gender
-                m = re.search(r'([男女])', excerpt)
-                if m:
-                    info[party.name]['gender'] = m.group(1)
-                # Extract birth date
-                m = re.search(r'(\d{4})年(\d{1,2})月(\d{1,2})日出生', excerpt)
-                if m:
-                    info[party.name]['birth'] = f"{m.group(1)}年{m.group(2)}月{m.group(3)}日"
-                # Extract address
-                m = re.search(r'住([^\s，,。；]+)', excerpt)
-                if m:
-                    info[party.name]['address'] = m.group(1)
-                # Extract ID number
-                m = re.search(r'身份证号[：:]?\s*(\d{17}[\dX])', excerpt)
-                if m:
-                    info[party.name]['id_number'] = m.group(1)
-                # Extract phone
-                m = re.search(r'(?:电话|联系电话)[：:]?\s*(1[3-9]\d{9})', excerpt)
-                if m:
-                    info[party.name]['phone'] = m.group(1)
+                personal = extract_personal_info(excerpt)
+                for key, val in personal.items():
+                    if key not in info[party.name]:
+                        info[party.name][key] = val
     return info
 
 
@@ -738,7 +721,8 @@ def _答辩状模板(fact_card: FactCard) -> str:
     Produces a case-specific defense document based on actual fact card data.
     """
     def _is_company(name: str) -> bool:
-        return any(kw in name for kw in ('公司', '有限', '集团', '企业', '工厂', '商行', '商店', '事务所'))
+        from core.text_utils import is_company_name
+        return is_company_name(name)
 
     # Extract plaintiff and defendant info
     plaintiffs = [p for p in fact_card.parties if p.role in ("原告", "上诉人")]

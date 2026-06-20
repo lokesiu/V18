@@ -36,37 +36,20 @@ def _fact_has_source(fact: str, source_refs: list) -> bool:
     if not source_refs:
         return False
 
-    # Extract meaningful terms from the fact (skip common words)
-    stop_words = {
-        "的", "了", "在", "是", "我", "有", "和", "就", "不", "人", "都", "一",
-        "一个", "上", "也", "很", "到", "说", "要", "去", "你", "会", "着", "没有",
-        "看", "好", "自己", "这", "他", "她", "它", "们", "那", "被", "从", "把",
-    }
-
-    # Extract Chinese terms (2+ characters) and numbers
-    terms = set()
-    # Find Chinese word sequences
-    for match in re.finditer(r'[\u4e00-\u9fff]{2,}', fact):
-        word = match.group(0)
-        if word not in stop_words and len(word) >= 2:
-            terms.add(word)
-    # Find numbers
-    for match in re.finditer(r'\d+', fact):
-        terms.add(match.group(0))
-
+    from core.text_utils import extract_chinese_terms
+    terms = extract_chinese_terms(fact)
     if not terms:
         return False
 
-    # Check if at least 30% of terms appear in source excerpts
-    matched = 0
+    # Check if enough terms appear across source excerpts
+    found_terms = set()
     for ref in source_refs:
-        excerpt = ref.excerpt.lower() if ref.excerpt else ""
+        excerpt = (ref.excerpt or "").lower()
         for term in terms:
             if term in excerpt:
-                matched += 1
-                break  # Count each ref only once per fact
+                found_terms.add(term)
 
-    match_ratio = matched / len(terms) if terms else 0
+    match_ratio = len(found_terms) / len(terms) if terms else 0
     return match_ratio >= 0.3
 
 
@@ -86,35 +69,20 @@ def _validate_key_facts(fact_card: FactCard) -> List[str]:
 
 def _tag_disputed_facts(facts: List[str]) -> List[str]:
     """Tag disputed facts with 【争议】 prefix."""
-    tagged = []
-    for fact in facts:
-        if not fact.startswith("【争议】"):
-            tagged.append(f"【争议】{fact}")
-        else:
-            tagged.append(fact)
-    return tagged
+    from core.text_utils import strip_distiller_tags
+    return [f"【争议】{strip_distiller_tags(f)}" for f in facts]
 
 
 def _tag_missing_materials(materials: List[str]) -> List[str]:
     """Tag missing materials with 【待补充】 prefix."""
-    tagged = []
-    for item in materials:
-        if not item.startswith("【待补充】"):
-            tagged.append(f"【待补充】{item}")
-        else:
-            tagged.append(item)
-    return tagged
+    from core.text_utils import strip_distiller_tags
+    return [f"【待补充】{strip_distiller_tags(m)}" for m in materials]
 
 
 def _tag_conflicts(conflicts: List[str]) -> List[str]:
     """Tag conflicts with 【冲突】 prefix."""
-    tagged = []
-    for conflict in conflicts:
-        if not conflict.startswith("【冲突】"):
-            tagged.append(f"【冲突】{conflict}")
-        else:
-            tagged.append(conflict)
-    return tagged
+    from core.text_utils import strip_distiller_tags
+    return [f"【冲突】{strip_distiller_tags(c)}" for c in conflicts]
 
 
 def _filter_strategy_by_evidence(
@@ -237,8 +205,9 @@ def _validate_evidence_gap(
 
     def _normalize(text: str) -> str:
         """Normalize for fuzzy dedup."""
+        from core.text_utils import strip_distiller_tags
         import re
-        t = text.replace("【待补充】", "").replace("【待核对】", "").replace("【争议】", "").strip()
+        t = strip_distiller_tags(text)
         t = t.lstrip("缺少: ").lstrip("缺少:")
         t = re.sub(r'[，,。；;：:\s]+', '', t)
         return t

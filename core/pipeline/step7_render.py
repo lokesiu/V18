@@ -65,50 +65,12 @@ def _render_docx_from_content(
         True if rendering succeeded, False otherwise.
     """
     try:
-        # Post-process: Replace placeholder patterns from input materials
-        import re
-        # Replace [请填写...] bracket placeholder patterns (must be before ID/phone replacement)
-        content = re.sub(r'\[请填写[^\]]*\]', '', content)
-        content = re.sub(r'\[请补充[^\]]*\]', '', content)
-        # Replace standalone XXX
-        content = content.replace('XXX', '[已脱敏]')
-        # Replace "类型:" patterns
-        content = content.replace('类型:', '分类:')
-        content = content.replace('类型：', '分类：')
-        # Replace bare placeholder sentences (all variants)
-        content = re.sub(r'请填写[^\n，。；]*', '', content)
-        content = re.sub(r'请补充[^\n，。；]*', '', content)
-        # Remove Markdown bold markers **text** -> text
-        content = re.sub(r'\*\*([^*]+)\*\*', r'\1', content)
-        # Remove Markdown heading markers ### text -> text
-        content = re.sub(r'^#{1,6}\s+', '', content, flags=re.MULTILINE)
-        # Remove Markdown list markers at line start
-        content = re.sub(r'^\s*[-*]\s+', '', content, flags=re.MULTILINE)
-        # Remove LLM conversational opening patterns
-        content = re.sub(r'^好的[，,。.!！\s]*', '', content)
-        content = re.sub(r'资深诉讼律师[^。！\n]*[。！\n]?', '', content)
-        content = re.sub(r'为您撰写以下[：:]?\s*\n?', '', content)
-        content = re.sub(r'以下是[^。！\n]*[。！\n]?\s*\n?', '', content)
-        # Remove vague legal citations - replace with specific note
-        content = re.sub(r'《[^》]+》相关规定', '', content)
-        content = re.sub(r'的相关规定', '', content)
-        # Remove generic "法律文书" title that LLM sometimes adds
-        content = re.sub(r'^法律文书\s*\n?', '', content, flags=re.MULTILINE)
-        content = re.sub(r'法律文书\s*\n民事', '民事', content)
-        # Only replace ID/phone patterns that are NOT part of actual user info lines
-        # (user info lines contain "身份证号：" or "电话：" prefix)
+        from core.text_utils import clean_docx_content, mask_sensitive_in_line
+        content = clean_docx_content(content)
+
+        # Mask sensitive info line by line
         lines = content.split('\n')
-        cleaned_lines = []
-        for line in lines:
-            if '身份证号' in line or '联系电话' in line or '电话：' in line:
-                # Don't replace ID/phone in user info lines
-                cleaned_lines.append(line)
-            else:
-                # Replace standalone ID/phone patterns in other lines
-                line = re.sub(r'\d{15}(?:\d{2}[\dX])?', '[身份信息已脱敏]', line)
-                line = re.sub(r'1[3-9]\d{9}', '[电话已脱敏]', line)
-                line = re.sub(r'\d{4}[\dX]{12,}', '[账号已脱敏]', line)
-                cleaned_lines.append(line)
+        cleaned_lines = [mask_sensitive_in_line(line) for line in lines]
         content = '\n'.join(cleaned_lines)
 
         render_docx_from_text(content, output_path)
@@ -270,8 +232,8 @@ def _render_draft_documents(
         content_parts = []
 
         def _is_company(name: str) -> bool:
-            """判断当事人是否为公司法人。"""
-            return any(kw in name for kw in ('公司', '有限', '集团', '企业', '工厂', '商行', '商店', '事务所'))
+            from core.text_utils import is_company_name
+            return is_company_name(name)
 
         # Build structured legal document based on identity
         if '被告' in identity or '被诉' in identity:
@@ -426,10 +388,37 @@ def _extract_user_info_from_refs(fc) -> dict:
     Only extracts info for the DEFENDANT from defendant-specific documents.
     Plaintiff info is NOT extracted to avoid data contamination.
     """
-    import re
+    from core.text_utils import extract_personal_info
+
     info = {}
     if not fc or not fc.source_refs or not fc.parties:
         return info
+
+    # Only extract info for defendants
+    defendant_names = [p.name for p in fc.parties if p.role in ('被告', '被上诉人') and p.name]
+    if not defendant_names:
+        return info
+
+    for ref in fc.source_refs:
+        excerpt = ref.excerpt or ""
+        # Only process excerpts that are clearly about the defendant
+        is_defendant_doc = False
+        for dname in defendant_names:
+            if f"申请人：{dname}" in excerpt or f"答辩人：{dname}" in excerpt or f"提交人：{dname}" in excerpt:
+                is_defendant_doc = True
+                break
+        if not is_defendant_doc:
+            continue
+
+        for dname in defendant_names:
+            if dname in excerpt:
+                if dname not in info:
+                    info[dname] = {}
+                personal = extract_personal_info(excerpt)
+                for key, val in personal.items():
+                    if key not in info[dname]:
+                        info[dname][key] = val
+    return info
 
     # Only extract info for defendants
     defendant_names = [p.name for p in fc.parties if p.role in ('被告', '被上诉人') and p.name]
