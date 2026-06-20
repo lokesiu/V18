@@ -160,8 +160,9 @@ class SettingsStore:
                 base_url=cm.get("base_url", "").strip(),
                 model=cm.get("model", "").strip(),
             )
-        except Exception:
-            pass  # Use defaults on error
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning("Failed to load settings: %s", e)
 
     def save(self):
         """Save settings to file."""

@@ -33,10 +33,8 @@ def postprocess_documents(ctx: PipelineContext) -> Dict[str, str]:
     for doc_type, content in llm_docs.items():
         if doc_type == "答辩状":
             processed[doc_type] = _postprocess_defense(content, fc)
-            print(f"  [POSTPROCESS] 答辩状: 原告住址={('赣州市' in processed[doc_type])}, 律师费论点={('人为扩大' in processed[doc_type])}")
         elif doc_type == "行动建议书":
             processed[doc_type] = _postprocess_action_advice(content, fc)
-            print(f"  [POSTPROCESS] 行动建议书: 举报建议={('举报' in processed[doc_type])}")
         elif doc_type == "案件处境评估报告":
             processed[doc_type] = _postprocess_assessment(content, fc)
         else:

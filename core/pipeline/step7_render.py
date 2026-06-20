@@ -599,18 +599,12 @@ def step7_render(ctx: PipelineContext) -> PipelineContext:
 
     # --- Render identity-specific extra document ---
     extra_doc = _get_identity_extra_doc(ctx.identity)
-    ctx.log(f"  [DEBUG] extra_doc: {extra_doc}, identity: {ctx.identity}")
     if extra_doc:
         extra_prefix, extra_type, extra_fmt = extra_doc
         extra_name = _make_filename(extra_prefix, extra_fmt, ctx)
         extra_path = os.path.join(customer_dir, extra_name)
 
         content = llm_docs.get(extra_type) or filled_templates.get(extra_type)
-        # Debug: 检查extra content
-        if extra_type == "答辩状" and content:
-            ctx.log(f"  [DEBUG] 答辩状 content length: {len(content)}")
-            ctx.log(f"  [DEBUG] 答辩状 has 赣州市: {('赣州市' in content)}")
-            ctx.log(f"  [DEBUG] 答辩状 has 人为扩大: {('人为扩大' in content)}")
         if content:
             extra_render_fn = lambda op=extra_path, c=content: _render_docx_from_content(c, op, ctx)
             success = render_with_manifest(
