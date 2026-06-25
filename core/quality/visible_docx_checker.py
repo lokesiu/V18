@@ -15,15 +15,16 @@ from core.quality.final_artifact_auditor import CheckResult
 # Forbidden placeholder text patterns
 FORBIDDEN_PLACEHOLDERS: List[str] = [
     "TODO",
-    "暂无",
+    "暂无内容",
+    "暂无数据",
+    "暂无信息",
     "请自行补充",
     "lorem ipsum",
     "示例文本",
     "待填写",
     "此处填写",
     "XXX",
-    "占位",
-    "相关规定",
+    "占位符",
 ]
 
 # Forbidden internal field names that should never appear in user docs

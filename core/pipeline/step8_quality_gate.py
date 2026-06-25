@@ -272,7 +272,7 @@ def step8_quality_gate(ctx: PipelineContext) -> PipelineContext:
     ctx.log("  运行最终交付物审计...")
     try:
         from core.quality.final_artifact_auditor import AuditReport
-        audit_result = audit_artifacts(customer_dir, identity=ctx.identity)
+        audit_result = audit_artifacts(customer_dir, identity=ctx.identity, goal=ctx.goal)
         if audit_result is not None:
             # audit_artifacts returns AuditReport object, not dict
             if isinstance(audit_result, AuditReport):

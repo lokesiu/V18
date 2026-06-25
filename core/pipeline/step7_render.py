@@ -49,6 +49,27 @@ def _get_identity_extra_doc(identity: str) -> Optional[tuple]:
     return extras.get(identity)
 
 
+def _get_goal_extra_doc(goal: str) -> Optional[tuple]:
+    """Get the goal-specific extra document configuration.
+
+    Args:
+        goal: User goal string.
+
+    Returns:
+        Tuple of (file_prefix, doc_type, format) or None.
+    """
+    goal_extras = {
+        "申请再审": ("06_再审申请书", "再审申请书", "docx"),
+        "提起起诉": ("06_起诉状", "起诉状", "docx"),
+        "投诉举报": ("06_投诉状", "投诉状", "docx"),
+        "应诉答辩": ("06_答辩状", "答辩状", "docx"),
+        "申请行政复议": ("06_行政复议申请书", "行政复议申请书", "docx"),
+        "维权投诉": ("06_投诉状", "投诉状", "docx"),
+        "支付令异议": ("06_支付令异议书", "支付令异议书", "docx"),
+    }
+    return goal_extras.get(goal)
+
+
 def _render_docx_from_content(
     content: str,
     output_path: str,
@@ -236,7 +257,34 @@ def _render_draft_documents(
             return is_company_name(name)
 
         # Build structured legal document based on identity
-        if '被告' in identity or '被诉' in identity:
+        if goal == '申请再审':
+            content_parts.append("民事再审申请书\n\n")
+            if fc and fc.parties:
+                applicants = [p for p in fc.parties if p.role in ('原告', '上诉人', '申请人')]
+                respondents = [p for p in fc.parties if p.role in ('被告', '被上诉人', '被申请人')]
+                if applicants:
+                    content_parts.append(f"再审申请人：{applicants[0].name}\n")
+                if respondents:
+                    content_parts.append(f"被申请人：{respondents[0].name}\n")
+            content_parts.append(f"\n案号：{fc.case_id if fc and fc.case_id else '待补充'}\n\n")
+            content_parts.append("再审请求：\n")
+            content_parts.append("1. 请求依法撤销原判决\n")
+            content_parts.append("2. 请求依法改判或发回重审\n\n")
+            content_parts.append("事实与理由：\n\n")
+            if fc and fc.key_facts:
+                content_parts.append("一、原判决认定事实错误\n")
+                for i, fact in enumerate(fc.key_facts[:6], 1):
+                    clean = fact.replace("【待核对】", "").replace("【争议】", "").strip()
+                    if clean:
+                        content_parts.append(f"{i}. {clean}\n")
+            content_parts.append("\n二、法律依据\n")
+            content_parts.append("1. 《中华人民共和国民事诉讼法》第二百零七条（再审事由）\n")
+            content_parts.append("2. 《中华人民共和国民事诉讼法》第二百一十二条（申请期限）\n\n")
+            content_parts.append("综上所述，原判决认定事实错误/适用法律错误，恳请贵院依法再审。\n\n")
+            content_parts.append(f"此致\n{fc.court if fc and fc.court else '________人民法院'}\n\n")
+            content_parts.append("再审申请人：_______________\n")
+            content_parts.append("日期：_______________\n")
+        elif '被告' in identity or '被诉' in identity:
             content_parts.append("民事答辩状\n\n")
             # Party info from fact_card with detailed info
             if fc and fc.parties:
@@ -420,46 +468,6 @@ def _extract_user_info_from_refs(fc) -> dict:
                         info[dname][key] = val
     return info
 
-    # Only extract info for defendants
-    defendant_names = [p.name for p in fc.parties if p.role in ('被告', '被上诉人') and p.name]
-    if not defendant_names:
-        return info
-
-    for ref in fc.source_refs:
-        excerpt = ref.excerpt or ""
-        # Only process excerpts that are clearly about the defendant
-        # (e.g., defendant's own applications, not court documents listing all parties)
-        is_defendant_doc = False
-        for dname in defendant_names:
-            # Check if this is a document filed BY the defendant (not just mentioning them)
-            if f"申请人：{dname}" in excerpt or f"答辩人：{dname}" in excerpt or f"提交人：{dname}" in excerpt:
-                is_defendant_doc = True
-                break
-        if not is_defendant_doc:
-            continue
-
-        for dname in defendant_names:
-            if dname in excerpt:
-                if dname not in info:
-                    info[dname] = {}
-                # Search the full excerpt for personal info
-                m = re.search(r'([男女])', excerpt)
-                if m:
-                    info[dname]['gender'] = m.group(1)
-                m = re.search(r'(\d{4})年(\d{1,2})月(\d{1,2})日出生', excerpt)
-                if m:
-                    info[dname]['birth'] = f"{m.group(1)}年{m.group(2)}月{m.group(3)}日"
-                m = re.search(r'住([^\s，,。；]+)', excerpt)
-                if m:
-                    info[dname]['address'] = m.group(1)
-                m = re.search(r'身份证号[：:]?\s*(\d{17}[\dX])', excerpt)
-                if m:
-                    info[dname]['id_number'] = m.group(1)
-                m = re.search(r'(?:电话|联系电话)[：:]?\s*(1[3-9]\d{9})', excerpt)
-                if m:
-                    info[dname]['phone'] = m.group(1)
-    return info
-
 
 def _get_party_name(ctx: PipelineContext) -> str:
     """从上下文中提取主要当事人姓名用于动态文件名。"""
@@ -586,10 +594,16 @@ def step7_render(ctx: PipelineContext) -> PipelineContext:
         else:
             failed_files.append(file_name)
 
-    # --- Render identity-specific extra document ---
-    extra_doc = _get_identity_extra_doc(ctx.identity)
+    # --- Render identity-specific or goal-specific extra document ---
+    extra_doc = _get_goal_extra_doc(ctx.goal) or _get_identity_extra_doc(ctx.identity)
+    secondary = None
     if extra_doc:
         extra_prefix, extra_type, extra_fmt = extra_doc
+        # Check for secondary goal-specific doc
+        goal_extra_secondary = {
+            "支付令异议": ("07_支付令异议策略分析", "支付令异议策略分析", "docx"),
+        }
+        secondary = goal_extra_secondary.get(ctx.goal)
         extra_name = _make_filename(extra_prefix, extra_fmt, ctx)
         extra_path = os.path.join(customer_dir, extra_name)
 
@@ -615,6 +629,34 @@ def step7_render(ctx: PipelineContext) -> PipelineContext:
                     failed_files.append(pdf_name)
             else:
                 failed_files.append(extra_name)
+
+    # --- Render secondary goal-specific document (e.g., strategy analysis) ---
+    if secondary:
+        sec_prefix, sec_type, sec_fmt = secondary
+        sec_name = _make_filename(sec_prefix, sec_fmt, ctx)
+        sec_path = os.path.join(customer_dir, sec_name)
+        sec_content = llm_docs.get(sec_type) or filled_templates.get(sec_type)
+        if sec_content:
+            sec_render_fn = lambda op=sec_path, c=sec_content: _render_docx_from_content(c, op, ctx)
+            sec_success = render_with_manifest(
+                ctx, task_id, sec_name, sec_fmt, sec_render_fn, sec_path, ts=ts,
+            )
+            if sec_success:
+                rendered_files.append(sec_path)
+                pdf_name = sec_name.replace(".docx", ".pdf")
+                pdf_path = sec_path.replace(".docx", ".pdf")
+                pdf_render_fn = lambda dp=pdf_path, sp=sec_path: convert_to_pdf(sp, dp)
+                pdf_success = render_with_manifest(
+                    ctx, task_id, pdf_name, "pdf", pdf_render_fn, pdf_path,
+                    source_file=sec_path, ts=ts,
+                )
+                if pdf_success:
+                    pdf_files.append(pdf_path)
+                    rendered_files.append(pdf_path)
+                else:
+                    failed_files.append(pdf_name)
+            else:
+                failed_files.append(sec_name)
 
     # --- Build customer delivery ZIP ---
     zip_name = "客户交付包.zip"

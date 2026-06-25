@@ -306,6 +306,7 @@ class AnalysisWorker(QThread):
                     self.finished_with_files.emit(True, output_dir, rendered_files)
                 else:
                     # True failure — no files produced
+                    self._quality_warnings = list(ctx.errors)
                     for err in ctx.errors:
                         self.log.emit(f"错误: {err}")
                     error_summary = ctx.errors[-1] if ctx.errors else "未知错误"

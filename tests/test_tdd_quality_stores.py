@@ -35,7 +35,7 @@ class TestStep2Gate:
         ctx.raw_texts = ["足够长的文本" * 20]
         ctx.fact_card = FactCard(key_facts=[])
         result = run_step2_gate(ctx)
-        assert result.status == "blocked"
+        assert result.status == "warning"
 
     def test_no_parties_warning(self):
         ctx = PipelineContext()

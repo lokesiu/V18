@@ -318,9 +318,17 @@ class MainWindow(FluentWindow):
                     error_details=error_details,
                 )
             else:
+                # Read ctx.errors from worker for more specific failure reason
+                failure_reason = "分析过程中出现错误。请检查材料文件后重试。"
+                if self.worker and hasattr(self.worker, '_quality_warnings'):
+                    warnings = self.worker._quality_warnings
+                    if warnings:
+                        failure_reason = warnings[0]
+                if not error_details:
+                    error_details = failure_reason
                 self.case_detail_page.result_card.show_error(
                     title="分析失败",
-                    description="分析过程中出现错误。请检查材料文件后重试。",
+                    description=failure_reason,
                     error_details=error_details,
                 )
 

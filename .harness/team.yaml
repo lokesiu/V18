@@ -1,0 +1,70 @@
+# .harness/team.yaml — 明证台 V18 Agent Team
+#
+# This file defines the project's agent team. Each rein owns a domain.
+# Reins are project-scoped agents stored under .harness/reins/<name>/.
+#
+# HOW TO ADD A NEW REIN:
+#   mavis team add <name> --as project
+#   Or: mavis agent create --name <name> --target <repo>
+#
+# HOW TO INVOKE A REIN:
+#   /<name> <task>  (slash command in OpenCode chat)
+#   Or: use mavis session start --agent <name>
+#
+---
+team: v18-reins
+project: D:\codex\V18
+version: "1.0"
+generated: 2026-06-23
+
+reins:
+  - name: gui-rein
+    domain: app/
+    description: PySide6 FluentWindow GUI — pages, widgets, worker threads, auth UI
+    primary_agent: build
+    skills: []
+    routes:
+      - gui
+      - ui
+      - pyside6
+      - desktop
+
+  - name: pipeline-rein
+    domain: core/workflow/, core/ai/, core/extract.py, core/distiller.py
+    description: Dual AI pipeline (9-stage DeepSeek+MiMo), workflow orchestration, scenario routing
+    primary_agent: build
+    skills: []
+    routes:
+      - pipeline
+      - workflow
+      - ai
+      - deepseek
+      - mimo
+      - extract
+      - distill
+
+  - name: qa-rein
+    domain: core/quality/, tests/
+    description: Quality gates, artifact auditing, TDD tests, acceptance criteria
+    primary_agent: build
+    skills: []
+    routes:
+      - quality
+      - gate
+      - test
+      - tdd
+      - pytest
+      - qa
+
+  - name: render-rein
+    domain: core/render/, templates/
+    description: DOCX/PDF/XLSX/ZIP rendering, Jinja2 templates, distillation
+    primary_agent: build
+    skills: [docx, pdf]
+    routes:
+      - render
+      - docx
+      - pdf
+      - template
+      - jinja2
+      - xlsx

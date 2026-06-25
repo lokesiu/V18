@@ -15,7 +15,7 @@ from core.fact_card import PipelineContext
 # ---------------------------------------------------------------------------
 
 VALID_IDENTITIES = ["消费者", "投诉方", "起诉方", "起诉方（原告）", "被诉方", "被诉方（被告）", "复议申请人", "行政复议申请人", "整理证据"]
-VALID_GOALS = ["维权投诉", "投诉举报", "提起起诉", "起诉立案", "应诉答辩", "申请行政复议", "行政复议", "证据整理"]
+VALID_GOALS = ["维权投诉", "投诉举报", "提起起诉", "起诉立案", "应诉答辩", "申请行政复议", "行政复议", "申请再审", "支付令异议", "证据整理"]
 
 IDENTITY_GOAL_MAP = {
     "消费者": "维权投诉",
@@ -50,6 +50,12 @@ IDENTITY_DOC_TYPES = {
     "整理证据": ["证据目录", "案件处境评估报告", "行动建议书", "证据闭环补强清单"],
 }
 
+# 申请再审: uses 再审申请书 instead of standard litigation docs
+RETRIAL_DOC_TYPES = ["再审申请书", "证据目录", "案件处境评估报告", "行动建议书", "证据闭环补强清单"]
+
+# 支付令异议: 异议书 + 风险评估 + 行动方案
+PAYMENT_ORDER_DOC_TYPES = ["支付令异议书", "案件处境评估报告", "行动建议书", "支付令异议策略分析", "证据闭环补强清单"]
+
 # SABCD rating definitions
 SABCD_LEVELS = {
     "S": "证据充分、事实清楚、法律依据明确，胜诉/成功概率极高",
@@ -82,6 +88,18 @@ def get_expected_doc_types(identity: str) -> List[str]:
     """
     canonical = _normalize_identity(identity)
     return IDENTITY_DOC_TYPES.get(canonical, IDENTITY_DOC_TYPES.get(identity, []))
+
+
+def get_expected_doc_types_for_goal(identity: str, goal: str) -> List[str]:
+    """Returns document types based on both identity and goal.
+
+    When goal is 申请再审, returns retrial-specific document types.
+    """
+    if goal == "申请再审":
+        return RETRIAL_DOC_TYPES
+    if goal == "支付令异议":
+        return PAYMENT_ORDER_DOC_TYPES
+    return get_expected_doc_types(identity)
 
 
 def get_sabcd_factors(identity: str, goal: str) -> Dict[str, Any]:
@@ -191,6 +209,42 @@ def get_sabcd_factors(identity: str, goal: str) -> Dict[str, Any]:
             "链完整": 0.30,
             "来源可靠": 0.20,
             "形式合规": 0.20,
+        }
+
+    # 申请再审
+    if goal == "申请再审":
+        factors["criteria"] = [
+            "是否符合再审法定事由",
+            "原判决认定事实是否缺乏证据",
+            "原判决适用法律是否错误",
+            "是否在法定六个月内提出",
+            "是否有新证据足以推翻原判决",
+            "审判程序是否违法",
+        ]
+        factors["weight_distribution"] = {
+            "法定事由": 0.25,
+            "事实认定": 0.20,
+            "法律适用": 0.20,
+            "时效合规": 0.10,
+            "新证据": 0.15,
+            "程序违法": 0.10,
+        }
+
+    # 支付令异议
+    if goal == "支付令异议":
+        factors["criteria"] = [
+            "支付令是否符合法定条件",
+            "异议是否在法定15日内提出",
+            "异议理由是否成立",
+            "异议成功后的诉讼风险评估",
+            "替代方案的成本收益分析",
+        ]
+        factors["weight_distribution"] = {
+            "法定条件": 0.20,
+            "时效合规": 0.25,
+            "异议理由": 0.25,
+            "诉讼风险": 0.15,
+            "替代方案": 0.15,
         }
 
     # Add general assessment guidance

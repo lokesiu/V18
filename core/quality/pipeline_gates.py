@@ -82,12 +82,12 @@ def run_step2_gate(ctx: PipelineContext) -> GateResult:
             message="事实提取未生成 fact_card，提取引擎可能异常",
         ))
     else:
-        # Rule 4: key_facts empty
+        # Rule 4: key_facts empty (warning — let step3 LLM enhance try)
         if not ctx.fact_card.key_facts:
             result.issues.append(GateIssue(
                 rule="key_facts_empty",
-                severity="blocking",
-                message="未提取到任何关键事实，材料内容可能不足",
+                severity="warning",
+                message="本地提取未获取关键事实，将由AI增强提取",
             ))
 
         # Rule 5: parties empty (warning only)

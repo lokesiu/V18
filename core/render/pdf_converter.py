@@ -87,7 +87,7 @@ def _try_reportlab(docx_path: str, pdf_path: str) -> bool:
         from reportlab.lib.pagesizes import A4
         from reportlab.lib.units import cm, mm
         from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-        from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_JUSTIFY
+        from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT, TA_JUSTIFY
         from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak
         from reportlab.pdfbase import pdfmetrics
         from reportlab.pdfbase.ttfonts import TTFont
@@ -146,6 +146,10 @@ def _try_reportlab(docx_path: str, pdf_path: str) -> bool:
             'CnBodyNoIndent', parent=style_body,
             firstLineIndent=0,
         )
+        style_right = ParagraphStyle(
+            'CnRight', parent=style_body,
+            alignment=TA_RIGHT, firstLineIndent=0,
+        )
 
         # Build story
         story = []
@@ -167,19 +171,22 @@ def _try_reportlab(docx_path: str, pdf_path: str) -> bool:
 
             style_name = para.style.name if para.style else ""
             
-            # Check if paragraph is centered in DOCX
+            # Check if paragraph is centered or right-aligned in DOCX
             is_centered = False
+            is_right = False
             if para.alignment is not None:
                 from docx.enum.text import WD_ALIGN_PARAGRAPH
                 is_centered = (para.alignment == WD_ALIGN_PARAGRAPH.CENTER)
+                is_right = (para.alignment == WD_ALIGN_PARAGRAPH.RIGHT)
 
             # First non-empty paragraph: always treat as title
             if not title_found:
                 story.append(Paragraph(text, style_title))
                 title_found = True
             elif is_centered:
-                # Other centered paragraphs also get title style
                 story.append(Paragraph(text, style_title))
+            elif is_right:
+                story.append(Paragraph(text, style_right))
             elif 'Heading 1' in style_name or '标题 1' in style_name:
                 story.append(Spacer(1, 8))
                 story.append(Paragraph(text, style_h1))

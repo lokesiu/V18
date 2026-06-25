@@ -12,7 +12,7 @@ from qfluentwidgets import ComboBox
 
 # ── Data ──────────────────────────────────────────────────────────────
 IDENTITY_OPTIONS = ["消费者", "被诉方（被告）", "起诉方（原告）", "复议申请人"]
-GOAL_OPTIONS = ["维权投诉", "应诉答辩", "提起起诉", "申请行政复议", "证据整理"]
+GOAL_OPTIONS = ["维权投诉", "应诉答辩", "提起起诉", "申请行政复议", "申请再审", "支付令异议", "证据整理"]
 
 IDENTITY_GOAL_MAP: dict[str, str] = {
     "消费者": "维权投诉",
@@ -26,6 +26,10 @@ SCENARIO_NAMES: dict[str, str] = {
     "起诉方（原告）_提起起诉": "原告主动进攻流",
     "消费者_维权投诉": "消费者维权冲击流",
     "复议申请人_申请行政复议": "行政复议逆转流",
+    "被诉方（被告）_支付令异议": "支付令异议防御流",
+    "消费者_支付令异议": "消费者支付令异议",
+    "起诉方（原告）_申请再审": "再审申请突破流",
+    "被诉方（被告）_申请再审": "被告再审翻盘流",
     "消费者_证据整理": "消费者证据整理",
     "被诉方（被告）_证据整理": "被诉方证据整理",
     "起诉方（原告）_证据整理": "原告方证据整理",
@@ -93,10 +97,11 @@ class IdentityGoalGrid(QWidget):
         id_col.addWidget(id_label)
 
         self.identity_combo = ComboBox(self)
-        self.identity_combo.addItems(IDENTITY_OPTIONS)
         self.identity_combo.setStyleSheet(_COMBO_STYLE)
-        self.identity_combo.currentTextChanged.connect(self._on_identity_changed)
         self.identity_combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.identity_combo.blockSignals(True)
+        self.identity_combo.addItems(IDENTITY_OPTIONS)
+        self.identity_combo.blockSignals(False)
 
         # Set default and disable unavailable options
         self._setup_identity_combo()
@@ -137,13 +142,18 @@ class IdentityGoalGrid(QWidget):
         go_col.addWidget(go_label)
 
         self.goal_combo = ComboBox(self)
-        self.goal_combo.addItems(GOAL_OPTIONS)
         self.goal_combo.setStyleSheet(_COMBO_STYLE)
-        self.goal_combo.currentTextChanged.connect(self._on_goal_changed)
         self.goal_combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.goal_combo.blockSignals(True)
+        self.goal_combo.addItems(GOAL_OPTIONS)
+        self.goal_combo.blockSignals(False)
 
         # Set default and disable unavailable options
         self._setup_goal_combo()
+
+        # Connect signals AFTER both combos are fully initialized
+        self.identity_combo.currentTextChanged.connect(self._on_identity_changed)
+        self.goal_combo.currentTextChanged.connect(self._on_goal_changed)
 
         go_col.addWidget(self.goal_combo)
         grid.addLayout(go_col, 1)

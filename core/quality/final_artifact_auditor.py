@@ -369,31 +369,44 @@ def _check_no_internal_fields(customer_dir: str) -> CheckResult:
 # ---------------------------------------------------------------------------
 # Check 8: All expected files exist (5 core docs + PDFs + ZIP)
 # ---------------------------------------------------------------------------
-def _get_expected_docx_names(identity: str = "") -> List[str]:
-    """Get expected DOCX names based on identity."""
+def _get_expected_docx_names(identity: str = "", goal: str = "") -> List[str]:
+    """Get expected DOCX names based on identity and goal."""
     base_docs = [
         "01_案件处境评估报告.docx",
         "02_行动建议书.docx",
         "03_证据闭环补强清单.docx",
         "05_可提交文书草稿.docx",
     ]
-    identity_extras = {
-        "投诉方": "06_投诉状.docx",
-        "起诉方": "06_起诉状.docx",
-        "起诉方（原告）": "06_起诉状.docx",
-        "被诉方（被告）": "06_答辩状.docx",
-        "行政复议申请人": "06_行政复议申请书.docx",
+    # Goal-based extras take priority
+    goal_extras = {
+        "申请再审": "06_再审申请书.docx",
+        "提起起诉": "06_起诉状.docx",
+        "投诉举报": "06_投诉状.docx",
+        "应诉答辩": "06_答辩状.docx",
+        "申请行政复议": "06_行政复议申请书.docx",
+        "维权投诉": "06_投诉状.docx",
+        "支付令异议": "06_支付令异议书.docx",
     }
-    extra = identity_extras.get(identity, "")
-    if extra:
-        base_docs.append(extra)
+    if goal in goal_extras:
+        base_docs.append(goal_extras[goal])
+    else:
+        identity_extras = {
+            "投诉方": "06_投诉状.docx",
+            "起诉方": "06_起诉状.docx",
+            "起诉方（原告）": "06_起诉状.docx",
+            "被诉方（被告）": "06_答辩状.docx",
+            "行政复议申请人": "06_行政复议申请书.docx",
+        }
+        extra = identity_extras.get(identity, "")
+        if extra:
+            base_docs.append(extra)
     return base_docs
 
 
-def _check_expected_files(customer_dir: str, identity: str = "") -> CheckResult:
+def _check_expected_files(customer_dir: str, identity: str = "", goal: str = "") -> CheckResult:
     """Verify all expected output files exist in customer directory."""
     missing: List[str] = []
-    expected_names = _get_expected_docx_names(identity)
+    expected_names = _get_expected_docx_names(identity, goal)
 
     # Check DOCX documents - support dynamic filenames with party name
     all_files = os.listdir(customer_dir) if os.path.isdir(customer_dir) else []
@@ -408,7 +421,10 @@ def _check_expected_files(customer_dir: str, identity: str = "") -> CheckResult:
         base_name = doc_name.replace(".docx", "")
         found = False
         for filename in all_files:
-            if filename.startswith(base_name) and filename.endswith(".docx"):
+            if not filename.endswith(".docx"):
+                continue
+            # Match: exact, or "base_name_*.docx" (dynamic with party name)
+            if filename == doc_name or (filename.startswith(base_name + "_") or filename.startswith(base_name + "案")):
                 found = True
                 break
         
@@ -448,7 +464,7 @@ def _check_expected_files(customer_dir: str, identity: str = "") -> CheckResult:
 # ---------------------------------------------------------------------------
 # Main entry point
 # ---------------------------------------------------------------------------
-def audit_artifacts(customer_dir: str, identity: str = "") -> AuditReport:
+def audit_artifacts(customer_dir: str, identity: str = "", goal: str = "") -> AuditReport:
     """Run all quality checks on customer output directory.
 
     This is the FINAL quality gate. If any check fails, the pipeline fails.
@@ -457,6 +473,7 @@ def audit_artifacts(customer_dir: str, identity: str = "") -> AuditReport:
         customer_dir: Absolute path to the customer output directory
                       (e.g. outputs/case_001/)
         identity: User identity string for determining expected files.
+        goal: User goal string for goal-specific expected files.
 
     Returns:
         AuditReport with results of all 8 checks.
@@ -498,7 +515,7 @@ def audit_artifacts(customer_dir: str, identity: str = "") -> AuditReport:
 
     # Check 8: expected files (identity-aware)
     try:
-        result = _check_expected_files(customer_dir, identity=identity)
+        result = _check_expected_files(customer_dir, identity=identity, goal=goal)
     except Exception as exc:
         result = CheckResult(
             check_name="预期文件齐全",

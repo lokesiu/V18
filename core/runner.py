@@ -290,7 +290,7 @@ def main():
     analyze_parser = subparsers.add_parser("analyze", help="Run analysis")
     analyze_parser.add_argument("--input", required=True, help="Input directory")
     analyze_parser.add_argument("--identity", required=True, help="Identity (投诉方/起诉方/被诉方/行政复议申请人/整理证据)")
-    analyze_parser.add_argument("--goal", required=True, help="Goal (投诉举报/起诉立案/应诉答辩/行政复议/证据整理)")
+    analyze_parser.add_argument("--goal", required=True, help="Goal (投诉举报/起诉立案/应诉答辩/行政复议/申请再审/证据整理)")
     analyze_parser.add_argument("--out", required=True, help="Output directory")
     
     # inspect
