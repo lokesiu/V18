@@ -43,6 +43,7 @@ dependencies = [
   "docxtpl==0.20.2",
   "openpyxl==3.1.5",
   "pypdf==6.14.2",
+  "reportlab==5.0.0",
   "lxml==6.1.1",
   "Jinja2==3.1.6",
   # HTTP / network
@@ -78,6 +79,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   "pytest==9.1.1",
+  "pytest-asyncio==1.4.0",
   "pytest-cov>=7.0.0",
   "coverage>=7.10.0",
   "ruff>=0.13.0",
@@ -129,14 +131,18 @@ addopts = [
   "--strict-markers",
   "--tb=short",
 ]
+asyncio_mode = "auto"
 markers = [
   "asyncio: marks tests as async (deselect with -m 'not asyncio')",
   "slow: marks tests as slow (deselect with -m 'not slow')",
   "integration: marks tests as integration (need real LLM keys)",
+  "needs_libreoffice: tests requiring LibreOffice on PATH (skipped if absent)",
+  "needs_license: tests requiring real machine_id / license state (skipped in CI)",
 ]
 filterwarnings = [
   "ignore::DeprecationWarning:docx.*",
   "ignore::DeprecationWarning:pydantic.*",
+  "ignore::RuntimeWarning:pytest_asyncio.*",
 ]
 
 # --- Ruff configuration ---

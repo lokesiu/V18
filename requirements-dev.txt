@@ -5,6 +5,7 @@
 
 # --- Test runner ---
 pytest==9.1.1
+pytest-asyncio==1.4.0    # for tests using `async def` (see tests/test_tdd_step6_mock.py)
 
 # --- Coverage (for CI) ---
 pytest-cov==7.0.0
