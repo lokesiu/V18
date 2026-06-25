@@ -39,24 +39,21 @@ class HomePage(QWidget):
         # Header bar
         root.addWidget(self._build_header())
 
-        # Main content with vertical centering
+        # Main content — top-aligned, compact margins so the upload
+        # section feels focused rather than floating in dead space.
         content = QWidget()
         content_layout = QVBoxLayout(content)
-        content_layout.setContentsMargins(48, 0, 48, 32)
+        content_layout.setContentsMargins(36, 24, 36, 24)
         content_layout.setSpacing(0)
-
-        # Top spacer for vertical centering
-        content_layout.addSpacerItem(QSpacerItem(
-            20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding
-        ))
+        content_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         # Upload section (core area)
         content_layout.addWidget(self._build_upload_section())
 
-        # Bottom spacer for vertical centering
-        content_layout.addSpacerItem(QSpacerItem(
-            20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding
-        ))
+        # Bottom elastic stretch (replaces the old symmetric 2x spacer).
+        # Keeps the section glued to the top while still allowing the
+        # window to grow without empty space at the top.
+        content_layout.addStretch(1)
 
         root.addWidget(content)
 
@@ -120,14 +117,17 @@ class HomePage(QWidget):
         """)
 
         layout = QVBoxLayout(container)
-        layout.setSpacing(20)
-        layout.setContentsMargins(36, 32, 36, 32)
+        layout.setSpacing(14)
+        layout.setContentsMargins(28, 22, 28, 22)
 
         title = SubtitleLabel("上传材料")
-        title.setStyleSheet("font-size: 16px; font-weight: 600; color: #0F172A; border: none; letter-spacing: 0.5px;")
+        title.setStyleSheet("font-size: 15px; font-weight: 600; color: #0F172A; border: none; letter-spacing: 0.5px;")
         layout.addWidget(title)
 
         self.upload_card = UploadCard()
+        # Cap the upload card so the section doesn't balloon on tall windows.
+        self.upload_card.setMaximumHeight(280)
+        self.upload_card.setMinimumHeight(200)
         layout.addWidget(self.upload_card)
 
         self.identity_goal_grid = IdentityGoalGrid()
@@ -138,14 +138,14 @@ class HomePage(QWidget):
         layout.addWidget(purpose_label)
 
         self.purpose_input = PlainTextEdit()
-        self.purpose_input.setPlaceholderText("请简要描述您的具体需求，例如：帮我整理证据材料，找出对我有利的证据...")
-        self.purpose_input.setMaximumHeight(72)
+        self.purpose_input.setPlaceholderText("请简要描述您的具体需求,例如:帮我整理证据材料,找出对我有利的证据...")
+        self.purpose_input.setMaximumHeight(60)
         self.purpose_input.setStyleSheet("""
             PlainTextEdit {
                 background-color: #F8FAFC;
                 border: 1px solid #E2E8F0;
                 border-radius: 8px;
-                padding: 10px 14px;
+                padding: 8px 12px;
                 font-size: 13px;
                 color: #0F172A;
                 selection-background-color: #BFDBFE;
@@ -167,7 +167,7 @@ class HomePage(QWidget):
                 background-color: #FEF2F2;
                 border: 1px solid #FECACA;
                 border-radius: 6px;
-                padding: 8px 12px;
+                padding: 6px 10px;
             }
         """)
         self._notice_label.setVisible(False)
@@ -175,7 +175,7 @@ class HomePage(QWidget):
 
         self.start_btn = PrimaryPushButton("开始分析")
         self.start_btn.setIcon(FluentIcon.PLAY)
-        self.start_btn.setFixedHeight(48)
+        self.start_btn.setFixedHeight(42)
         self.start_btn.setStyleSheet("""
             PrimaryPushButton {
                 background-color: #2563EB;
@@ -184,7 +184,7 @@ class HomePage(QWidget):
                 font-weight: 600;
                 border: none;
                 border-radius: 8px;
-                padding: 10px 32px;
+                padding: 8px 28px;
             }
             PrimaryPushButton:hover {
                 background-color: #1D4ED8;

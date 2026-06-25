@@ -256,8 +256,11 @@ class UploadCard(QWidget):
         super().__init__(parent)
         self.selected_files: list[str] = []
         self.warnings: list[str] = []
+        # Track folder sources for the loaded-state summary.
+        # Map: parent_folder -> count (e.g., {"D:/cases/张三案": 12})
+        self._folder_sources: dict[str, int] = {}
         self._is_scanning = False
-        self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
+        self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Expanding)
         self.setMinimumHeight(280)
         self.setAcceptDrops(True)
         self._setup_ui()
@@ -336,6 +339,19 @@ class UploadCard(QWidget):
         """)
         layout.addWidget(sub_text)
 
+        folder_hint = QLabel("📂 也支持直接拖入文件夹（自动扫描所有子目录）")
+        folder_hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        folder_hint.setStyleSheet("""
+            QLabel {
+                color: #64748B;
+                font-size: 11px;
+                background: transparent;
+                border: none;
+                font-weight: 500;
+            }
+        """)
+        layout.addWidget(folder_hint)
+
         return widget
 
     def _build_loaded_state(self) -> QWidget:
@@ -366,6 +382,23 @@ class UploadCard(QWidget):
             }
         """)
         layout.addWidget(self.summary_label)
+
+        # Optional folder-source breakdown (only shown when a folder was dropped)
+        self.sources_label = QLabel("")
+        self.sources_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.sources_label.setStyleSheet("""
+            QLabel {
+                color: #475569;
+                font-size: 11px;
+                background: transparent;
+                border: none;
+                font-weight: 500;
+                padding: 0 0 4px 0;
+            }
+        """)
+        self.sources_label.setWordWrap(True)
+        self.sources_label.setVisible(False)
+        layout.addWidget(self.sources_label)
 
         self.file_list = QListWidget()
         self.file_list.setMaximumHeight(180)
@@ -440,9 +473,36 @@ class UploadCard(QWidget):
         resolved_files = resolve_paths(raw_paths)
 
         if resolved_files:
+            # Track folder sources so the summary can show "从文件夹 X 加载了 N 个文件"
+            self._record_folder_sources(raw_paths, resolved_files)
             self._process_files(resolved_files)
 
         event.acceptProposedAction()
+
+    def _record_folder_sources(self, raw_paths: list[str], resolved_files: list[str]) -> None:
+        """Map each file back to its parent folder (if dropped from a folder).
+
+        Updates self._folder_sources. Called from dropEvent before
+        _process_files; safe to call multiple times.
+        """
+        # Reset on new drop — we want a clean per-drop summary
+        self._folder_sources.clear()
+
+        resolved_set = set(resolved_files)
+        for raw in raw_paths:
+            p = Path(raw)
+            if p.is_dir():
+                folder = str(p)
+                # Count how many of the resolved files live under this folder
+                count = sum(
+                    1 for f in resolved_files
+                    if Path(f).resolve().is_relative_to(p.resolve())
+                )
+                if count > 0:
+                    self._folder_sources[folder] = count
+
+        # If raw_paths were all individual files (not folders), keep the
+        # _folder_sources empty so the summary doesn't show folder info.
 
     def _process_files(self, files: list[str]):
         """Process and add files."""
@@ -496,6 +556,7 @@ class UploadCard(QWidget):
         """Clear selected files."""
         self.selected_files = []
         self.warnings = []
+        self._folder_sources.clear()
         self._update_display()
         self.files_selected.emit([])
 
@@ -516,10 +577,35 @@ class UploadCard(QWidget):
             # Switch to loaded state
             self.summary_label.setText(f"已成功加载 {count} 份文件")
 
-            # Update file list with only filenames (no full paths)
+            # Show folder sources if any were dropped
+            if self._folder_sources:
+                parts = [
+                    f"📂 {os.path.basename(folder)}  ({n} 个文件)"
+                    for folder, n in self._folder_sources.items()
+                ]
+                self.sources_label.setText("  ·  ".join(parts))
+                self.sources_label.setVisible(True)
+            else:
+                self.sources_label.setVisible(False)
+
+            # Update file list with relative paths when a folder is the source.
+            # This disambiguates files with the same name in different subfolders
+            # (e.g., "evidence/contract.pdf" vs "correspondence/contract.pdf").
             self.file_list.clear()
             for filepath in self.selected_files:
-                name = os.path.basename(filepath)
-                self.file_list.addItem(name)
+                if self._folder_sources:
+                    # Find the parent folder this file belongs to
+                    for folder in self._folder_sources.keys():
+                        try:
+                            rel = Path(filepath).resolve().relative_to(Path(folder).resolve())
+                            display = str(rel).replace(os.sep, " / ")
+                            self.file_list.addItem(display)
+                            break
+                        except ValueError:
+                            continue
+                    else:
+                        self.file_list.addItem(os.path.basename(filepath))
+                else:
+                    self.file_list.addItem(os.path.basename(filepath))
 
             self.stacked.setCurrentIndex(1)
