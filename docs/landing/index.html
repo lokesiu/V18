@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>明证台 V18 — 律师辩护文档自动化工作台</title>
+<meta name="description" content="基于双 AI 流水线（DeepSeek + MiMo）的 9 阶段自动文档生成工具，为律师提供诉状、财产保全申请书、证据清单等专业法律文书。">
+<style>
+  :root {
+    --primary: #1a3a5c;      /* 深蓝 — 信任 */
+    --accent: #b8924a;       /* 金 — 权威 */
+    --bg: #fafaf8;
+    --bg-soft: #f0ede5;
+    --text: #2c2c2c;
+    --text-muted: #6b6b6b;
+    --border: #d8d4ca;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    line-height: 1.65;
+  }
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+  header {
+    background: var(--primary);
+    color: #fff;
+    padding: 56px 0 48px;
+    border-bottom: 4px solid var(--accent);
+  }
+  header h1 {
+    font-size: 2.6rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    letter-spacing: 0.5px;
+  }
+  header .tagline {
+    font-size: 1.2rem;
+    color: #e6dcc0;
+    font-weight: 300;
+    margin-bottom: 24px;
+  }
+  header .cta {
+    display: inline-block;
+    margin-top: 16px;
+    padding: 12px 32px;
+    background: var(--accent);
+    color: var(--primary);
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: background 0.2s;
+  }
+  header .cta:hover { background: #d4ad60; }
+  section { padding: 64px 0; border-bottom: 1px solid var(--border); }
+  section h2 {
+    font-size: 1.9rem;
+    color: var(--primary);
+    margin-bottom: 32px;
+    border-left: 4px solid var(--accent);
+    padding-left: 16px;
+  }
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 28px;
+  }
+  .feature {
+    background: #fff;
+    padding: 28px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+  .feature .icon {
+    font-size: 2.2rem;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+  .feature h3 {
+    color: var(--primary);
+    margin-bottom: 8px;
+    font-size: 1.2rem;
+  }
+  .feature p { color: var(--text-muted); font-size: 0.95rem; }
+  .pipeline {
+    background: #fff;
+    padding: 32px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+  .pipeline .stage {
+    display: flex;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--bg-soft);
+  }
+  .pipeline .stage:last-child { border-bottom: none; }
+  .pipeline .stage .num {
+    width: 36px; height: 36px;
+    background: var(--primary);
+    color: #fff;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 600;
+    margin-right: 18px;
+    flex-shrink: 0;
+  }
+  .pipeline .stage .name {
+    font-weight: 600;
+    color: var(--primary);
+    width: 240px;
+    flex-shrink: 0;
+  }
+  .pipeline .stage .ai {
+    background: var(--bg-soft);
+    color: var(--text-muted);
+    padding: 2px 10px;
+    border-radius: 3px;
+    font-size: 0.85rem;
+    margin-right: 16px;
+  }
+  .pipeline .stage .desc { color: var(--text-muted); }
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 24px;
+  }
+  .pricing-card {
+    background: #fff;
+    padding: 32px 28px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    text-align: center;
+  }
+  .pricing-card.recommended {
+    border: 2px solid var(--accent);
+    position: relative;
+  }
+  .pricing-card.recommended::before {
+    content: "推荐";
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--accent);
+    color: #fff;
+    padding: 4px 16px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  .pricing-card h3 { color: var(--primary); margin-bottom: 8px; }
+  .pricing-card .price {
+    font-size: 2.2rem;
+    color: var(--primary);
+    font-weight: 600;
+    margin: 16px 0 4px;
+  }
+  .pricing-card .price-unit { color: var(--text-muted); font-size: 0.9rem; }
+  .pricing-card ul {
+    list-style: none;
+    text-align: left;
+    margin: 20px 0;
+    padding: 0;
+  }
+  .pricing-card li {
+    padding: 6px 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+  .pricing-card li::before {
+    content: "✓";
+    color: var(--accent);
+    font-weight: bold;
+    margin-right: 8px;
+  }
+  .cta-secondary {
+    display: inline-block;
+    padding: 10px 24px;
+    background: transparent;
+    border: 2px solid var(--primary);
+    color: var(--primary);
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: 600;
+    margin-top: 12px;
+  }
+  .cta-secondary:hover { background: var(--primary); color: #fff; }
+  .trust {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px;
+    justify-content: space-around;
+    text-align: center;
+  }
+  .trust .stat .num {
+    font-size: 2.4rem;
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .trust .stat .label {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-top: 4px;
+  }
+  footer {
+    background: var(--primary);
+    color: #d4d4d4;
+    padding: 48px 0 32px;
+    text-align: center;
+  }
+  footer p { margin: 6px 0; font-size: 0.9rem; }
+  footer a { color: var(--accent); text-decoration: none; }
+  .legal-note {
+    background: var(--bg-soft);
+    padding: 12px 16px;
+    border-left: 3px solid var(--accent);
+    margin: 16px 0;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <h1>明证台 V18</h1>
+    <p class="tagline">为律师打造的双 AI 辩护文档自动化工作台</p>
+    <p style="max-width: 600px; margin-bottom: 24px;">
+      9 阶段流水线 · DeepSeek + MiMo 交叉验证 · 5 道质量门禁<br>
+      从案件材料到完整法律文书包，分钟级交付，单文档平均节省 6-10 小时人工
+    </p>
+    <a href="#contact" class="cta">预约演示</a>
+  </div>
+</header>
+
+<section>
+  <div class="container">
+    <h2>为什么是 V18</h2>
+    <div class="features">
+      <div class="feature">
+        <div class="icon">◆</div>
+        <h3>9 阶段流水线</h3>
+        <p>从接案、抽取事实、双 AI 审查、生成策略到最终文书，每一步都可审计、可追溯。9 个阶段对应法律服务的实际工作流，不是黑盒。</p>
+      </div>
+      <div class="feature">
+        <div class="icon">◆</div>
+        <h3>双 AI 交叉验证</h3>
+        <p>DeepSeek 负责抽取与策略生成，MiMo 负责真实性审查与质量复核。同一份事实由两个不同模型独立评判，降低单一模型的偏见风险。</p>
+      </div>
+      <div class="feature">
+        <div class="icon">◆</div>
+        <h3>5 道质量门禁</h3>
+        <p>每一份交付前必经 pipeline_gates、defense_quality_gate、visible_docx、package_leak_scanner、final_artifact_auditor 五道自动检查。</p>
+      </div>
+      <div class="feature">
+        <div class="icon">◆</div>
+        <h3>本地优先 · 数据不出网</h3>
+        <p>桌面应用，所有数据保留在律所电脑。AI 调用可配置使用本地模型或私有云。客户案件信息 = 律师特权，绝不外传。</p>
+      </div>
+      <div class="feature">
+        <div class="icon">◆</div>
+        <h3>完整法律文书包</h3>
+        <p>一次跑完输出：民事起诉状、诉前财产保全申请书、证据清单、律师函、可提交文书草稿 — 全部 DOCX 格式，可直接编辑签字。</p>
+      </div>
+      <div class="feature">
+        <div class="icon">◆</div>
+        <h3>PySide6 桌面体验</h3>
+        <p>Windows 原生应用，不依赖浏览器。Fluent 设计语言，符合律师日常工作习惯（Office、PDF 阅读器）。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <h2>9 阶段流水线一览</h2>
+    <p style="color: var(--text-muted); margin-bottom: 24px;">
+      从原始材料到最终交付，每阶段有明确的输入、输出、责任模型。
+    </p>
+    <div class="pipeline">
+      <div class="stage"><div class="num">1</div><div class="name">接案 / Intake</div><div class="ai">本地</div><div class="desc">扫描材料、PDF/DOCX 解析、OCR 识别</div></div>
+      <div class="stage"><div class="num">2</div><div class="name">事实抽取</div><div class="ai">DeepSeek</div><div class="desc">从非结构化材料中识别当事人、金额、日期、关键事实</div></div>
+      <div class="stage"><div class="num">3</div><div class="name">事实审查</div><div class="ai">MiMo</div><div class="desc">对每个事实做真实性、完整性、关联性审查</div></div>
+      <div class="stage"><div class="num">4</div><div class="name">事实蒸馏</div><div class="ai">本地</div><div class="desc">事实结构化为 DistilledCard，喂给下一阶段</div></div>
+      <div class="stage"><div class="num">5</div><div class="name">策略生成</div><div class="ai">DeepSeek</div><div class="desc">基于事实生成诉讼策略、答辩思路、争议焦点</div></div>
+      <div class="stage"><div class="num">6</div><div class="name">策略复核</div><div class="ai">MiMo</div><div class="desc">检查策略的可行性、风险点、遗漏项</div></div>
+      <div class="stage"><div class="num">7</div><div class="name">最终蒸馏</div><div class="ai">本地</div><div class="desc">生成最终 DistilledCard（用于渲染）</div></div>
+      <div class="stage"><div class="num">8</div><div class="name">渲染交付</div><div class="ai">本地</div><div class="desc">生成 DOCX / PDF / XLSX / ZIP 法律文书包</div></div>
+      <div class="stage"><div class="num">9</div><div class="name">质量门禁</div><div class="ai">本地</div><div class="desc">5 道门禁：完整性 / 一致性 / 可见性 / 隐私 / 终审</div></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <h2>为不同律所定制的方案</h2>
+    <p style="color: var(--text-muted); margin-bottom: 24px;">
+      所有方案包含 V18 桌面端 + 一年免费升级 + 5×8 工单支持。
+    </p>
+    <div class="pricing-grid">
+      <div class="pricing-card">
+        <h3>独立律师版</h3>
+        <div class="price">¥ 19,800</div>
+        <div class="price-unit">首年 / 单席位</div>
+        <ul>
+          <li>1 个桌面端席位</li>
+          <li>所有 9 阶段流水线</li>
+          <li>每月 50 案件额度</li>
+          <li>邮件支持（48h 响应）</li>
+          <li>在线文档 + 视频教程</li>
+        </ul>
+        <a href="#contact" class="cta-secondary">联系购买</a>
+      </div>
+      <div class="pricing-card recommended">
+        <h3>小型律所版</h3>
+        <div class="price">¥ 78,000</div>
+        <div class="price-unit">首年 / 5 席位</div>
+        <ul>
+          <li>5 个桌面端席位</li>
+          <li>所有 9 阶段流水线</li>
+          <li>每月 300 案件额度</li>
+          <li>5×8 工单 + 远程协助</li>
+          <li>专属客户经理</li>
+          <li>季度使用报告</li>
+        </ul>
+        <a href="#contact" class="cta-secondary">联系购买</a>
+      </div>
+      <div class="pricing-card">
+        <h3>律所企业版</h3>
+        <div class="price">面议</div>
+        <div class="price-unit">按规模 / 年</div>
+        <ul>
+          <li>10+ 席位</li>
+          <li>无案件额度限制</li>
+          <li>本地私有化部署选项</li>
+          <li>7×24 工单 + 1h SLA</li>
+          <li>定制场景模板</li>
+          <li>数据本地化 + 私有 LLM</li>
+        </ul>
+        <a href="#contact" class="cta-secondary">企业咨询</a>
+      </div>
+    </div>
+    <div class="legal-note">
+      <strong>关于价格：</strong>上表为参考价，最终合同价以双方协商为准。包含一年免费升级。续约按 60% 标准。
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <h2>数据安全与合规</h2>
+    <div class="features">
+      <div class="feature">
+        <div class="icon">🔒</div>
+        <h3>本地优先架构</h3>
+        <p>桌面应用，案件数据默认保留在律所电脑。可配置云端 AI 调用（DeepSeek / MiMo），但材料本身不离开本机。</p>
+      </div>
+      <div class="feature">
+        <div class="icon">🔐</div>
+        <h3>机器绑定授权</h3>
+        <p>License key 绑定机器 ID，不可跨设备复制。授权失效后历史案件仍可读取，新增案件需重新授权。</p>
+      </div>
+      <div class="feature">
+        <div class="icon">📋</div>
+        <h3>自动隐私过滤</h3>
+        <p>所有错误日志、crash 报告自动脱敏（手机/身份证/邮箱/API key），不写入客户数据。</p>
+      </div>
+      <div class="feature">
+        <div class="icon">📜</div>
+        <h3>完整协议</h3>
+        <p>提供用户协议、数据处理协议 (DPA)、保密协议 (NDA) 三件套，可按律所要求定制条款。</p>
+      </div>
+    </div>
+    <div class="legal-note">
+      <strong>合规状态：</strong>V18 处于 RC 阶段。我们正在准备等保 2.0 合规（计划 2026 Q4）。
+      当前建议律所先做小规模试点（&lt; 10 案件），全面铺开前完成等保认证。
+    </div>
+  </div>
+</section>
+
+<section id="contact">
+  <div class="container">
+    <h2>预约演示 / 申请试用</h2>
+    <p style="color: var(--text-muted); margin-bottom: 24px;">
+      我们为种子客户提供 <strong>30 天免费试用</strong>（含 1 小时远程 onboarding）。请联系销售预约。
+    </p>
+    <div class="features">
+      <div class="feature">
+        <h3>📞 销售热线</h3>
+        <p>010-XXXX-XXXX（工作日 9:00-18:00）<br>微信：v18-sales（请备注律所+姓名）</p>
+      </div>
+      <div class="feature">
+        <h3>📧 邮件</h3>
+        <p>sales@v18.example.com<br>（24h 响应，48h 内安排演示）</p>
+      </div>
+      <div class="feature">
+        <h3>🏢 团队联络</h3>
+        <p>参见 <a href="../AUTH.md">docs/AUTH.md</a> 内部团队联系信息。</p>
+      </div>
+    </div>
+    <div class="legal-note">
+      <strong>数据保护声明：</strong>提交联系信息即表示同意 V18 团队按 <a href="../legal/TERMS_OF_SERVICE.md">用户协议</a> 和
+      <a href="../legal/DATA_PROCESSING_AGREEMENT.md">数据处理协议 (DPA)</a> 处理您的联系信息。
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <p><strong>明证台 V18</strong> · 律师辩护文档自动化 · Windows 桌面应用</p>
+    <p>© 2026 V18 Team · <a href="../LICENSE">专有软件许可证</a> · <a href="../sla.md">SLA</a> · <a href="../CHANGELOG.md">更新日志</a></p>
+    <p style="opacity: 0.6; margin-top: 12px;">本网站仅为产品介绍；具体合同条款以最终签署的协议为准。</p>
+  </div>
+</footer>
+
+</body>
+</html>
