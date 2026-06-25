@@ -14,6 +14,8 @@ from qfluentwidgets import (
     TableWidget, ScrollArea, SearchLineEdit, Dialog,
 )
 
+from app.widgets.empty_state import EmptyState
+
 _BTN_STYLE = (
     "PushButton { background-color: #FFFFFF; color: #374151; "
     "border: 1px solid #D1D5DB; border-radius: 6px; padding: 6px 14px; }"
@@ -42,6 +44,8 @@ class AuditPage(QWidget):
         super().__init__(parent)
         self._all_entries: list[dict] = []
         self._setup_ui()
+        # Render the initial (empty) state so the empty widget is visible
+        self._render_table(self._all_entries)
 
     def _setup_ui(self):
         root = QVBoxLayout(self)
@@ -136,18 +140,15 @@ class AuditPage(QWidget):
         table_layout.addWidget(self.table)
         
         # ── Empty state (inside table container, centered) ──
-        self._empty_widget = QWidget()
-        empty_layout = QVBoxLayout(self._empty_widget)
-        empty_layout.setContentsMargins(20, 40, 20, 40)
-        empty_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        
-        self._empty_label = CaptionLabel("暂无审计记录")
-        self._empty_label.setStyleSheet("color: #6B7280; font-size: 13px;")
-        self._empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        empty_layout.addWidget(self._empty_label)
-        
-        table_layout.addWidget(self._empty_widget)
-        self._empty_widget.setVisible(False)
+        self._empty_state = EmptyState(
+            icon=FluentIcon.HISTORY,
+            title="暂无审计记录",
+            description="系统运行后产生的所有事件都会记录在这里。\n可以按时间、级别、类型进行筛选。",
+            action_text="刷新",
+            on_action=lambda: self.refresh_btn.click() if hasattr(self, "refresh_btn") else None,
+        )
+        table_layout.addWidget(self._empty_state)
+        self._empty_state.setVisible(False)
         
         layout.addWidget(table_container, 1)
 
@@ -204,11 +205,11 @@ class AuditPage(QWidget):
         self.table.setRowCount(0)
 
         if not entries:
-            self._empty_widget.setVisible(True)
+            self._empty_state.setVisible(True)
             self.table.setVisible(False)
             return
 
-        self._empty_widget.setVisible(False)
+        self._empty_state.setVisible(False)
         self.table.setVisible(True)
 
         for e in entries:
