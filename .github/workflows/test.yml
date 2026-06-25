@@ -1,0 +1,151 @@
+# .github/workflows/test.yml — V18 regression test runner
+#
+# Runs on:
+#   - every push to master
+#   - every pull request targeting master
+#   - manual workflow_dispatch
+#
+# Pipeline (Windows runner, Python 3.11):
+#   1. Install runtime + dev deps from requirements*.txt
+#   2. Scan repo for missing docs / secrets / stray prints (scripts/scan_repo.py)
+#   3. Verify .harness/ self-consistency (scripts/verify_harness.py)
+#   4. Ruff lint (best-effort, non-blocking warning)
+#   5. Smoke pytest (--maxfail=5 -x) — fail fast on critical regressions
+#   6. Full pytest suite (if smoke passed)
+#
+# History:
+#   - 2026-06-25: Created (V18 had no CI before; this is the first).
+#   - 2026-06-25: Added requirements.txt install + scan_repo step.
+name: V18 Tests
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: pytest + harness + scan (Python ${{ matrix.python-version }})
+    runs-on: windows-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      - name: Show Python / pip versions
+        shell: pwsh
+        run: |
+          python --version
+          pip --version
+
+      - name: Install runtime deps (requirements.txt)
+        shell: pwsh
+        run: |
+          if (Test-Path requirements.txt) {
+            pip install -r requirements.txt
+          } else {
+            Write-Host "::error::requirements.txt missing — V18 cannot install runtime deps"
+            exit 1
+          }
+
+      - name: Install dev deps (requirements-dev.txt)
+        shell: pwsh
+        run: |
+          if (Test-Path requirements-dev.txt) {
+            pip install -r requirements-dev.txt
+          } else {
+            Write-Host "::warning::requirements-dev.txt missing — skipping dev deps (pytest may be missing)"
+          }
+
+      - name: Install V18 in editable mode
+        shell: pwsh
+        run: |
+          if (Test-Path pyproject.toml) {
+            pip install -e .
+          } else {
+            Write-Host "::warning::pyproject.toml missing — skipping editable install"
+          }
+
+      - name: Scan repo hygiene (scan_repo.py)
+        shell: pwsh
+        run: |
+          python scripts/scan_repo.py
+        env:
+          PYTHONIOENCODING: utf-8
+
+      - name: Verify .harness/ self-consistency (verify_harness.py)
+        shell: pwsh
+        run: |
+          python scripts/verify_harness.py
+        env:
+          PYTHONIOENCODING: utf-8
+
+      - name: Ruff lint (best-effort, non-blocking)
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          if (Get-Command ruff -ErrorAction SilentlyContinue) {
+            ruff check core/ app/ --output-format=concise || Write-Host "::warning::Ruff found lint issues (non-blocking)"
+          } else {
+            Write-Host "::notice::Ruff not installed; skipping lint step"
+          }
+        env:
+          PYTHONIOENCODING: utf-8
+
+      - name: Run pytest (smoke subset, fast)
+        shell: pwsh
+        run: |
+          python -m pytest tests/ -v --maxfail=5 -x --tb=short
+        env:
+          PYTHONIOENCODING: utf-8
+
+      - name: Run pytest (full suite if smoke passed)
+        shell: pwsh
+        if: success()
+        run: |
+          python -m pytest tests/ -v --tb=short --durations=20
+        env:
+          PYTHONIOENCODING: utf-8
+
+      - name: Run pytest with coverage (if pytest-cov available)
+        shell: pwsh
+        if: success()
+        continue-on-error: true
+        run: |
+          $has_cov = python -c "import pytest_cov" 2>&1
+          if ($LASTEXITCODE -eq 0) {
+            python -m pytest tests/ --cov=core --cov-report=term --cov-report=xml -q --no-header --tb=no
+            Write-Host "Coverage report written to coverage.xml"
+          } else {
+            Write-Host "::notice::pytest-cov not installed; skipping coverage report"
+          }
+        env:
+          PYTHONIOENCODING: utf-8
+
+      - name: Upload coverage to Codecov (if configured)
+        if: always()
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          fail_ci_if_error: false
+          verbose: false
+        continue-on-error: true

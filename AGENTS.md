@@ -124,3 +124,94 @@ Project-scoped agents under `.harness/reins/`. Each rein owns one domain. Reins 
 | `render-rein` | `core/render/`, `templates/`, `core/intake.py` | `render`, `docx`, `pdf`, `template`, `jinja2`, `xlsx` | `docx`, `pdf` |
 
 Full definitions in `.harness/team.yaml`. To invoke a rein: `/<name> <task>` in chat, or `mavis session start --agent <name>`.
+
+## DEPENDENCIES
+
+| Manifest | Purpose | Pin strategy |
+|----------|---------|--------------|
+| `requirements.txt` | Runtime deps (PySide6, docx, AI clients, OCR, audio routing) | exact `==` from prod-validated set |
+| `requirements-dev.txt` | Test/lint/build tools (pytest, pytest-cov, ruff, mypy, pyinstaller) | runtime deps `==`, dev deps `>=` |
+| `pyproject.toml` | PEP 621 build config + 5 CLI entry points + ruff/mypy tool config | mirrors `requirements.txt` |
+
+**Version-locked runtime deps** — bumping them requires a full regression test (CI must go green). **Loosely-pinned dev deps** — bump freely, CI will catch breakage.
+
+**Adding a new runtime dep**:
+
+1. `pip install <pkg>==<version>` locally
+2. Add to `requirements.txt` AND `pyproject.toml [project] dependencies` (both, kept in sync)
+3. Run `python scripts/verify_harness.py` (will not break, but worth confirming)
+4. Run full pytest to ensure no regression
+5. Note in CHANGELOG.md (Unreleased section)
+
+**Why no `setup.py` / `setup.cfg`**: PEP 621 `pyproject.toml` is the modern single-source-of-truth. `setup.py` is only kept if you need editable build hooks beyond `[tool.setuptools]`.
+
+## DOCUMENTATION
+
+| File | Purpose | Status |
+|------|---------|--------|
+| `README.md` | Project intro, quick-start, reins, contributing | ✅ Exists (6.8 KB) |
+| `LICENSE` | Proprietary license placeholder | ✅ Exists (2.3 KB) |
+| `CHANGELOG.md` | Release history (Keep a Changelog format) | ✅ Exists (4.0 KB) |
+| `AGENTS.md` | This file — project knowledge base for AI agents | ✅ Exists |
+| `docs/AUTH.md` | Internal team contact info | ✅ Exists (4.1 KB) |
+| `CONTRIBUTING.md` | Contribution guide | ❌ Missing — see AGENTS.md § Contributing instead |
+| `SECURITY.md` | Security policy / reporting | ❌ Missing — defer until public release |
+
+**Convention**: long-form docs go in `docs/`; meta docs (LICENSE, README, CHANGELOG, AGENTS.md) stay at repo root.
+
+## TESTING
+
+| Command | Purpose |
+|---------|---------|
+| `python -m pytest tests/ -v` | Full test suite (≈ 965 tests, ~3 min on Windows) |
+| `python -m pytest tests/test_tdd_pipeline.py -v` | Single test module |
+| `python scripts/verify_harness.py` | Self-test for `.harness/` (team.yaml + reins + AGENTS.md coherence, ~1s) |
+| `python scripts/verify_harness.py --json` | Same as above, JSON output for CI |
+| `python scripts/verify_harness.py --quiet` | Only show failures |
+
+**Baseline (2026-06-25, commit 6f2ff27)**: 924 passed / 41 failed / 5 warnings / 174.88s. The 41 failures cluster in:
+- `test_tdd_pdf_converter.py` — needs LibreOffice (or compatible PDF backend) on the host
+- `tests/test_auth_system.py` + `tests/manual/test_auth_anti_bypass.py` — needs real machine_id / license state
+- `test_tdd_render.py::TestExtractUserInfoFromRefs` — minor schema edge cases
+
+These are environmental, not code regressions. Add `--deselect tests/test_tdd_pdf_converter.py` to skip the PDF suite on hosts without LibreOffice.
+
+**Test naming convention**: `test_tdd_<module>.py` for tests written TDD-style (preferred); `test_<feature>.py` for higher-level acceptance / golden tests. Manual / smoke tests live under `tests/manual/`.
+
+## CI
+
+GitHub Actions workflow at `.github/workflows/test.yml` runs on:
+- every push to `master`
+- every pull request targeting `master`
+- manual `workflow_dispatch`
+
+Pipeline (Windows runner, Python 3.11):
+1. Install runtime deps (from `requirements.txt` if present, else best-effort)
+2. Smoke pytest (`--maxfail=5 -x`) — fails fast on critical regressions
+3. Full pytest suite (if smoke passes)
+4. `scripts/verify_harness.py` — catches .harness/ drift
+
+No coverage upload yet (no codecov integration). Add `pytest-cov` and a `codecov` upload step when the test suite stabilizes.
+
+## REPO HYGIENE
+
+`.gitignore` covers (most-recent additions marked **NEW**):
+- Python: `__pycache__/`, `*.pyc`, `*.egg-info/`, `dist/`, `build/`
+- Test coverage: **NEW** `.coverage`, `.coverage.*`, `htmlcov/`, `coverage.xml`
+- IDE: `.vscode/`, `.idea/`
+- Secrets: `.env`, `*.env`
+- Generated outputs: `outputs/`, `raw_materials/`, `raw_materials_real_defense/`
+- Runtime artifacts: **NEW** `reports/`, `test_run/`, `screenshots/`
+- Agent / session traces: **NEW** `.omo/`, `.opencode/`, `.continue/`
+- Binary media: `*.pdf`, `*.docx`, `*.xlsx`, `*.jpg`, `*.png`, `*.zip`
+- Logs: `crash_debug.log`, `*.log`, **NEW** `run_*.log`, `*_debug.log`
+- Test artifacts: `test_*.pdf`, **NEW** `test_*.png`, `clipboard_screenshot.png`, `section_*.png`
+- OS: `Thumbs.db`, `Desktop.ini`
+- DB: `*.db`
+
+**Where things go**:
+- New debug / one-off scripts → `scripts/` (already houses 30+ utilities)
+- New long-form reports / audits → archive externally; do NOT commit to `reports/` (gitignored)
+- New temporary runtime data → `outputs/` (gitignored)
+- New project-wide documentation → `docs/` (currently has `docs/AUTH.md`)
+- Test fixtures and golden cases → `tests/fixtures/` if needed (currently flat)

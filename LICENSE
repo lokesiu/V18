@@ -1,0 +1,55 @@
+Proprietary License — All Rights Reserved
+
+Copyright (c) 2026 V18 Team. All rights reserved.
+
+This software and associated documentation files (the "Software") are
+proprietary and confidential. The Software is provided under a closed-source
+proprietary license, NOT an open-source license.
+
+1. NO DISTRIBUTION. You may not copy, distribute, publish, or transfer the
+   Software, in whole or in part, to any third party without the prior
+   written consent of the copyright holder.
+
+2. NO MODIFICATION. You may not modify, adapt, translate, reverse engineer,
+   decompile, or disassemble the Software, except to the extent that such
+   activity is expressly permitted by applicable law notwithstanding this
+   limitation.
+
+3. NO DERIVATIVE WORKS. You may not create derivative works based on the
+   Software, in whole or in part.
+
+4. INTERNAL USE ONLY. Use of the Software is restricted to authorized
+   internal development, testing, and deployment within the organization
+   that obtained it.
+
+5. NO WARRANTY. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
+   KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+   OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND
+   NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+   LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION
+   OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION
+   WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+6. TERMINATION. This license is effective until terminated. It will
+   terminate automatically without notice if you fail to comply with any
+   provision.
+
+For licensing inquiries: see `docs/AUTH.md` for the team contact, or
+contact the V18 Team directly.
+
+---
+
+NOTE TO MAINTAINERS:
+
+This is a placeholder proprietary license. Before public distribution:
+
+  1. Replace this file with the actual proprietary license terms
+     negotiated with the V18 Team's legal counsel.
+  2. Update the [project] `license = { text = "Proprietary" }` line in
+     `pyproject.toml` if a SPDX identifier becomes available.
+  3. Add a per-file copyright header (e.g., `# Copyright (c) 2026 V18 Team.
+     All rights reserved.`) to all source files if required by your legal
+     team.
+
+This file is **generated** by `mavis init` style tooling. It is NOT legal
+advice.

@@ -8,6 +8,14 @@ build/
 *.spec
 .pytest_cache/
 
+# Test coverage
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+.tox/
+.nox/
+
 # IDE
 .vscode/
 .idea/
@@ -20,6 +28,16 @@ build/
 outputs/
 raw_materials_real_defense/
 raw_materials/
+
+# Reports, run logs, screenshots (runtime artifacts, not source)
+reports/
+test_run/
+screenshots/
+
+# Mavis / OpenCode session traces
+.omo/
+.opencode/
+.continue/
 
 # Binary/media files (not source code)
 *.pdf
@@ -37,6 +55,9 @@ crash_debug.log
 clipboard_screenshot.png
 section_*.png
 test_*.pdf
+test_*.png
+run_*.log
+*_debug.log
 
 # OS
 Thumbs.db

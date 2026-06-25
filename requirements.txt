@@ -1,0 +1,55 @@
+# requirements.txt — V18 runtime dependencies
+#
+# Pinned to the exact versions known to work in production (commit 6f2ff27+).
+# For dev / test / CI extras, see requirements-dev.txt.
+#
+# Install:    pip install -r requirements.txt
+# Verify:     python -c "import PySide6, docx, jinja2, httpx; print('OK')"
+
+# --- GUI (PySide6 + fluent-widgets + frameless window) ---
+PySide6==6.11.1
+PySide6-Fluent-Widgets==1.11.2
+PySide6-Frameless-Window==0.8.1
+
+# --- Document I/O ---
+python-docx==1.2.0        # DOCX read/write
+docxtpl==0.20.2           # Jinja2-based DOCX template filling
+openpyxl==3.1.5           # XLSX read/write
+pypdf==6.14.2             # PDF text extraction
+lxml==6.1.1               # XML backends for python-docx
+Jinja2==3.1.6             # Template engine (used by docxtpl + renderers)
+
+# --- HTTP / network ---
+httpx==0.28.1             # Modern HTTP client (DeepSeek / MiMo calls)
+requests==2.34.2          # Legacy HTTP for some integrations
+
+# --- Data / serialization ---
+PyYAML==6.0.3             # team.yaml + config files
+pydantic==2.13.4          # PipelineContext / FactCard / data contracts
+typing_extensions==4.15.0 # pydantic + Python 3.11 typing shims
+
+# --- Security / auth (license + machine_id + Ed25519) ---
+cryptography==49.0.0
+
+# --- Windows-specific (desktop evidence platform) ---
+comtypes==1.4.16          # COM PolicyConfig (Windows audio device control)
+pywin32==312              # Win32 API for file dialogs / registry / etc.
+
+# --- Image / OCR / vision ---
+pillow==12.2.0            # image manipulation
+opencv-python==4.13.0.92  # image preprocessing for OCR
+onnxruntime==1.27.0       # OCR inference (rapidocr backend)
+rapidocr-onnxruntime==1.4.4  # Chinese OCR (rapidocr)
+numpy==2.4.6              # numerical
+scipy==1.17.1             # signal processing
+shapely==2.1.2           # geometry
+pyclipper==1.4.0          # polygon clipping (for OCR layout)
+
+# --- Media / audio (TTS pipeline side-effect) ---
+imageio-ffmpeg==0.6.0     # ffmpeg binary for audio conversion
+sounddevice==0.5.5        # audio device routing (CABLE Input/Output)
+
+# --- UI helpers ---
+darkdetect==0.8.0         # OS dark mode detection
+colorthief==0.2.1         # extract dominant colors from images
+tqdm==4.68.3              # progress bars

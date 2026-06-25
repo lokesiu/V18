@@ -1,0 +1,22 @@
+# requirements-dev.txt — V18 development / test / CI dependencies
+#
+# Install on top of requirements.txt:
+#     pip install -r requirements.txt -r requirements-dev.txt
+
+# --- Test runner ---
+pytest==9.1.1
+
+# --- Coverage (for CI) ---
+pytest-cov==7.0.0
+coverage==7.10.7
+
+# --- Linting (optional but recommended) ---
+ruff==0.13.2             # fast linter + formatter (replaces flake8 + black)
+
+# --- Type checking (optional) ---
+mypy==1.18.2             # static type checker (best-effort, no strict mode yet)
+
+# --- Build / packaging ---
+pyinstaller==6.16.0      # Already used by the .spec file
+build==1.3.0             # PEP 517 build frontend
+twine==6.2.0             # PyPI upload (if/when this becomes a public package)

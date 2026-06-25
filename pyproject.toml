@@ -1,0 +1,193 @@
+# pyproject.toml — V18 build configuration
+#
+# PEP 621 compliant. Generated 2026-06-25 (commit 6f2ff27+).
+# Version is duplicated here and in core/__init__.py — keep them in sync.
+#
+# Build:     python -m build
+# Install:   pip install -e .
+# Verify:    python -c "import app.main_window"
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mingzhengtai"
+version = "18.0.0-rc1"
+description = "明证台 (Master Evidence Platform) — PySide6 desktop workbench for legal defense document generation"
+readme = "README.md"
+license = { text = "Proprietary" }
+authors = [
+  { name = "V18 Team" },
+]
+keywords = ["legal", "defense", "document-generation", "pyside6", "ai-pipeline", "evidence"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Win32 (MS Windows)",
+  "Intended Audience :: Legal Industry",
+  "License :: Other/Proprietary License",
+  "Operating System :: Microsoft :: Windows :: Windows 10",
+  "Operating System :: Microsoft :: Windows :: Windows 11",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Office/Business",
+]
+requires-python = ">=3.11,<3.13"
+dependencies = [
+  # GUI
+  "PySide6==6.11.1",
+  "PySide6-Fluent-Widgets==1.11.2",
+  "PySide6-Frameless-Window==0.8.1",
+  # Document I/O
+  "python-docx==1.2.0",
+  "docxtpl==0.20.2",
+  "openpyxl==3.1.5",
+  "pypdf==6.14.2",
+  "lxml==6.1.1",
+  "Jinja2==3.1.6",
+  # HTTP / network
+  "httpx==0.28.1",
+  "requests==2.34.2",
+  # Data / serialization
+  "PyYAML==6.0.3",
+  "pydantic==2.13.4",
+  "typing_extensions==4.15.0",
+  # Security / auth
+  "cryptography==49.0.0",
+  # Windows-specific
+  "comtypes==1.4.16",
+  "pywin32==312",
+  # Image / OCR / vision
+  "pillow==12.2.0",
+  "opencv-python==4.13.0.92",
+  "onnxruntime==1.27.0",
+  "rapidocr-onnxruntime==1.4.4",
+  "numpy==2.4.6",
+  "scipy==1.17.1",
+  "shapely==2.1.2",
+  "pyclipper==1.4.0",
+  # Media / audio
+  "imageio-ffmpeg==0.6.0",
+  "sounddevice==0.5.5",
+  # UI helpers
+  "darkdetect==0.8.0",
+  "colorthief==0.2.1",
+  "tqdm==4.68.3",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest==9.1.1",
+  "pytest-cov>=7.0.0",
+  "coverage>=7.10.0",
+  "ruff>=0.13.0",
+  "mypy>=1.18.0",
+]
+build = [
+  "pyinstaller==6.16.0",
+  "build==1.3.0",
+  "twine>=6.0.0",
+]
+
+[project.scripts]
+v18-doctor = "core.runner:main"
+v18-analyze = "core.runner:main"
+v18-inspect = "core.runner:main"
+v18-package = "core.runner:main"
+v18-selfcheck = "core.runner:main"
+
+[project.urls]
+"Project Knowledge" = ".harness/AGENTS.md"
+"Reins Team" = ".harness/team.yaml"
+"Issue Tracker" = "https://example.invalid/v18/issues"
+
+# --- Setuptools-specific config ---
+
+[tool.setuptools]
+include-package-data = true
+zip-safe = false
+platforms = ["win_amd64"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*", "core*"]
+exclude = ["tests*", "scripts*", "docs*", "outputs*", "build*", "dist*", "test_run*", "test_run_judgment*", "templates*", "prompts*", "screenshots*", "reports*"]
+
+[tool.setuptools.package-data]
+"app" = ["**/*.qss", "**/*.ui"]
+"core" = ["**/*.yaml", "**/*.json"]
+"templates" = ["**/*"]
+
+# --- Pytest configuration ---
+
+[tool.pytest.ini_options]
+minversion = "9.0"
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = [
+  "-ra",
+  "--strict-markers",
+  "--tb=short",
+]
+markers = [
+  "asyncio: marks tests as async (deselect with -m 'not asyncio')",
+  "slow: marks tests as slow (deselect with -m 'not slow')",
+  "integration: marks tests as integration (need real LLM keys)",
+]
+filterwarnings = [
+  "ignore::DeprecationWarning:docx.*",
+  "ignore::DeprecationWarning:pydantic.*",
+]
+
+# --- Ruff configuration ---
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+extend-exclude = [
+  "build",
+  "dist",
+  ".venv",
+  "scripts/_legacy_root",
+  "test_run",
+  "test_run_judgment",
+  "outputs",
+  "reports",
+  "screenshots",
+]
+
+[tool.ruff.lint]
+select = [
+  "E",
+  "W",
+  "F",
+  "I",
+  "B",
+  "UP",
+  "SIM",
+]
+ignore = [
+  "E501",
+  "B008",
+  "E402",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["B", "SIM"]
+"scripts/**" = ["E402"]
+
+# --- MyPy configuration ---
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+disallow_untyped_defs = false
+warn_unused_ignores = true
+warn_return_any = false
+exclude = [
+  "build/",
+  "dist/",
+  "scripts/_legacy_root/",
+  "test_run/",
+  "test_run_judgment/",
+]
